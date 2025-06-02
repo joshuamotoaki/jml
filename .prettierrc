@@ -9,7 +9,9 @@
         "useTabs": false,
         "singleQuote": false,
         "quoteProps": "consistent",
-        "printWidth": 80
+        "printWidth": 80,
+        "arrowParens": "always",
+        "trailingComma": "es5"
       }
     }
   ]
