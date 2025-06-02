@@ -68,23 +68,38 @@ const { currentPage } = Astro.props;
     <div class="about-content">
       <h2 class="text-h3 sm:text-huge mb-4">Joshua Motoaki Lau</h2>
 
-      <div class="text-h6 sm:text-h4 font-light space-y-4 w-full sm:w-[60%]">
+      <div class="text-h6 sm:text-h5 md:text-h4 space-y-4 w-full">
         <p>
-          I'm a student passionate about the intersection of technology and
-          creativity. Currently working with the NetSyn Lab and TigerApps to
-          build meaningful digital experiences.
+          I'm a fourth-year Electrical & Computer Engineering student at
+          Princeton University, specializing in computer systems and design
         </p>
         <p>
-          My work spans web development, research, and creative coding, always
-          seeking to push boundaries and explore new possibilities.
+          As co-president and chief software engineer of
+          <a
+            class="hover:text-light-hover duration-100 underline"
+            href="https://tigerapps.org"
+            target="_blank"
+          >
+            TigerApps</a
+          >, I lead the development of applications that serve the Princeton
+          community. My research with the
+          <a
+            class="hover:text-light-hover duration-100 underline"
+            href="https://netsyn.princeton.edu/"
+            target="_blank"
+          >
+            NetSyn Lab</a
+          > focuses on computer networks and security. You'll also find me on the
+          ice figure skating or playing taiko drums.
         </p>
         <p>
-          When I'm not coding, you can find me exploring art, photography, or
-          contemplating the world as "one gigantic painting."
+          I also occasionally take on freelance projects in web development,
+          design, and writing. Please contact me if you're interested in
+          collaborating.
         </p>
       </div>
 
-      <div class="absolute bottom-0 right-0 text-h6 sm:text-h4">
+      <div class="absolute bottom-0 right-0 text-h6 sm:text-h5 md:text-h4">
         <div class="flex flex-wrap gap-4">
           <a
             href="https://github.com/joshuamotoaki"
@@ -116,7 +131,7 @@ const { currentPage } = Astro.props;
     width: 100vw;
     height: 100vh;
     background: rgba(0, 70, 150, 0.8);
-    backdrop-filter: blur(16px);
+    backdrop-filter: blur(12px);
     z-index: 1000;
     opacity: 0;
     padding: 1rem;
