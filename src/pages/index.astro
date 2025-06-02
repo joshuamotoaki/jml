@@ -3,5 +3,33 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout>
-  <h1 class="bg-red-200">Astro</h1>
+  <div id="cont" class="relative w-full h-screen overflow-hidden bg-light">
+  <svg style="position: absolute; width: 0; height: 0;">
+    <defs>
+      <filter id="pageNoise">
+        <feTurbulence baseFrequency="0.3" numOctaves="3" stitchTiles="noStitch"/>
+        <feColorMatrix type="saturate" values="0"/>
+      </filter>
+    </defs>
+  </svg>
+
+  </div>
 </BaseLayout>
+
+<style>
+
+
+#cont::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  filter: url(#pageNoise);
+  opacity: 0.33;
+  pointer-events: none;
+  z-index: 1;
+}
+
+</style>

@@ -1,4 +1,5 @@
 @import "tailwindcss";
 
 @theme {
+    --color-light: #f0f0f0;
 }
