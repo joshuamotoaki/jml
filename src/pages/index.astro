@@ -159,11 +159,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
   #cont::before {
     content: '';
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
+    background: rgba(0, 0, 0, 0.1); /* Not sure why Safari needs this but it does */
     filter: url(#pageNoise);
     opacity: 0.33;
     pointer-events: none;
