@@ -1,0 +1,31 @@
+---
+// Header.astro
+export interface Props {
+  currentPage?: string;
+}
+
+const { currentPage } = Astro.props;
+---
+
+<header class="fixed top-0 left-0 w-full z-50">
+  <nav class="flex items-start justify-between px-4 py-1">
+    <a href="/" class="text-huge">
+      <span> 劉元明 </span>
+      <span> JML </span>
+    </a>
+    <a class="nav-button text-h2" href="/projects"> Projects </a>
+    <a class="nav-button text-h2" href="/blog"> Blog </a>
+    <button class="nav-button text-h2 cursor-pointer"> About </button>
+  </nav>
+</header>
+
+<style>
+  .nav-button {
+    text-decoration-line: underline;
+    transition-duration: var(--duration-std);
+  }
+
+  .nav-button:hover {
+    color: var(--color-dark-hover);
+  }
+</style>

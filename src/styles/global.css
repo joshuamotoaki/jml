@@ -2,7 +2,9 @@
 
 @theme {
     --color-light: #f0f0f0;
+    --color-light-hover: #d0d0d0;
     --color-dark: #242424;
+    --color-dark-hover: #444444;
 
     --color-red-std: #E63946;
     --color-orange-std: #F4845F;
@@ -11,4 +13,20 @@
     --color-blue-std: #118AB2;
     --color-indigo-std: #5C6BC0;
     --color-violet-std: #9B5DE5;
+
+    --duration-std: 100ms;
 }
+
+.text-huge {
+    font-size: 4rem;
+}
+
+.text-h1 {
+    font-size: 3rem;
+}
+
+.text-h2 {
+    font-size: 2rem;
+}
+
+

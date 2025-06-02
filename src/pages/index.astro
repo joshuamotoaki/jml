@@ -1,8 +1,11 @@
 ---
+import Header from "../components/Header.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout>
+  <Header currentPage="home" />
+
   <div id="cont" class="relative w-full h-screen overflow-hidden bg-light">
     <svg style="position: absolute; width: 0; height: 0;">
       <defs>
