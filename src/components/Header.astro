@@ -7,7 +7,7 @@ export interface Props {
 const { currentPage } = Astro.props;
 ---
 
-<header class="fixed top-0 left-0 w-full z-50">
+<header class="absolute top-0 left-0 w-full z-50">
   <!-- Desktop -->
   <nav class="hidden md:flex items-start justify-between px-4 py-1">
     <a href="/" class="text-huge font-light tracking-tighter -space-x-3">
@@ -73,7 +73,7 @@ const { currentPage } = Astro.props;
     <div class="about-content">
       <h2 class="text-h3 sm:text-huge mb-4">Joshua Motoaki Lau</h2>
 
-      <div class="text-h6 sm:text-h5 md:text-h4 space-y-4 w-full">
+      <div class="sm:text-h5 md:text-h4 space-y-4 w-full">
         <p>
           I'm a fourth-year Electrical & Computer Engineering student at
           Princeton University, specializing in computer systems and design.
@@ -104,7 +104,7 @@ const { currentPage } = Astro.props;
         </p>
       </div>
 
-      <div class="absolute bottom-0 right-0 text-h6 sm:text-h5 md:text-h4">
+      <div class="absolute bottom-0 right-0 sm:text-h5 md:text-h4">
         <div class="flex flex-wrap gap-4">
           <a
             href="https://github.com/joshuamotoaki"
@@ -130,7 +130,7 @@ const { currentPage } = Astro.props;
 
 <style>
   .about-dialog {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100vw;
