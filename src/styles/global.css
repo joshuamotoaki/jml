@@ -1,40 +1,48 @@
 @import "tailwindcss";
 
 @theme {
-    --color-light: #f0f0f0;
-    --color-light-hover: #d0d0d0;
-    --color-dark: #242424;
-    --color-dark-hover: #444444;
+  --color-light: #f0f0f0;
+  --color-light-hover: #d0d0d0;
+  --color-dark: #242424;
+  --color-dark-hover: #444444;
 
-    --color-red-std: #E63946;
-    --color-orange-std: #F4845F;
-    --color-yellow-std: #FFD166;
-    --color-green-std: #06D6A0;
-    --color-blue-std: #118AB2;
-    --color-indigo-std: #5C6BC0;
-    --color-violet-std: #9B5DE5;
+  --color-red-std: #e63946;
+  --color-orange-std: #f4845f;
+  --color-yellow-std: #ffd166;
+  --color-green-std: #06d6a0;
+  --color-blue-std: #118ab2;
+  --color-indigo-std: #5c6bc0;
+  --color-violet-std: #9b5de5;
 
-    --duration-std: 100ms;
+  --duration-std: 100ms;
 }
 
 .text-huge {
-    font-size: 4rem;
+  font-size: 4rem;
 }
 
 .text-h1 {
-    font-size: 2.5rem;
+  font-size: 2.5rem;
 }
 
 .text-h2 {
-    font-size: 1.56rem;
+  font-size: 1.56rem;
 }
 
 .text-h3 {
-    font-size: 1rem;
+  font-size: 1rem;
 }
 
 .text-h4 {
-    font-size: 0.625rem;
+  font-size: 0.625rem;
 }
 
+.nav-button {
+  cursor: pointer;
+  text-decoration-line: underline;
+  transition-duration: var(--duration-std);
+}
 
+.nav-button:hover {
+  color: var(--color-dark-hover);
+}
