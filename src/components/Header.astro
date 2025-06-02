@@ -8,14 +8,28 @@ const { currentPage } = Astro.props;
 ---
 
 <header class="fixed top-0 left-0 w-full z-50">
-  <nav class="flex items-start justify-between px-4 py-1">
-    <a href="/" class="text-huge">
+  <!-- Desktop -->
+  <nav class="hidden md:flex items-start justify-between px-4 py-1">
+    <a href="/" class="text-huge font-light tracking-tighter -space-x-2">
       <span> 劉元明 </span>
       <span> JML </span>
     </a>
     <a class="nav-button text-h2" href="/projects"> Projects </a>
     <a class="nav-button text-h2" href="/blog"> Blog </a>
     <button class="nav-button text-h2 cursor-pointer"> About </button>
+  </nav>
+
+  <!-- TODO: Mobile -->
+  <nav class="block md:hidden">
+    <a href="/" class="text-huge font-light tracking-tighter -space-x-2">
+      <span> 劉元明 </span>
+      <span> JML </span>
+    </a>
+    <div>
+      <a class="nav-button text-h2" href="/projects"> Projects </a>
+      <a class="nav-button text-h2" href="/blog"> Blog </a>
+      <button class="nav-button text-h2 cursor-pointer"> About </button>
+    </div>
   </nav>
 </header>
 
