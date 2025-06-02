@@ -66,9 +66,9 @@ const { currentPage } = Astro.props;
     </button>
 
     <div class="about-content">
-      <h2 class="text-huge mb-4">Joshua Motoaki Lau</h2>
+      <h2 class="text-h3 sm:text-huge mb-4">Joshua Motoaki Lau</h2>
 
-      <div class="text-h4 font-light space-y-4 max-w-2xl">
+      <div class="text-h6 sm:text-h4 font-light space-y-4 w-full sm:w-[60%]">
         <p>
           I'm a student passionate about the intersection of technology and
           creativity. Currently working with the NetSyn Lab and TigerApps to
@@ -84,21 +84,25 @@ const { currentPage } = Astro.props;
         </p>
       </div>
 
-      <div class="mt-8 flex flex-wrap gap-4">
-        <a
-          href="https://github.com/joshuamotoaki"
-          target="_blank"
-          class="nav-button text-h5 border border-current px-4 py-2 rounded"
-        >
-          GitHub
-        </a>
-        <a
-          href="https://www.linkedin.com/in/joshua-lau26/"
-          target="_blank"
-          class="nav-button text-h5 border border-current px-4 py-2 rounded"
-        >
-          LinkedIn
-        </a>
+      <div class="absolute bottom-0 right-0 text-h6 sm:text-h4">
+        <div class="flex flex-wrap gap-4">
+          <a
+            href="https://github.com/joshuamotoaki"
+            target="_blank"
+            class="hover:text-light-hover duration-100 underline"
+          >
+            GitHub
+          </a>
+          <a
+            href="https://www.linkedin.com/in/joshua-lau26/"
+            target="_blank"
+            class="hover:text-light-hover duration-100 underline"
+          >
+            LinkedIn
+          </a>
+        </div>
+        <p>joshuamotoaki@gmail.com</p>
+        <p class="font-light italic">Ventura County, California</p>
       </div>
     </div>
   </div>
@@ -118,8 +122,8 @@ const { currentPage } = Astro.props;
     padding: 1rem;
     visibility: hidden;
     transition:
-      opacity 0.3s ease,
-      visibility 0.3s ease;
+      opacity 0.2s ease,
+      visibility 0.2s ease;
   }
 
   .about-dialog.open {
@@ -146,6 +150,8 @@ const { currentPage } = Astro.props;
 
   .about-content {
     position: relative;
+    width: 100%;
+    height: 100%;
   }
 
   .about-close-btn {
@@ -157,29 +163,12 @@ const { currentPage } = Astro.props;
     cursor: pointer;
     padding: 1rem;
     border-radius: 50%;
-    transition: background-color 0.2s ease;
+    transition-duration: var(--duration-std);
     z-index: 3;
   }
 
   .about-close-btn:hover {
-    background: rgba(0, 0, 0, 0.1);
-  }
-
-  /* Mobile adjustments */
-  @media (max-width: 768px) {
-    .about-dialog-content {
-      padding: 1.5rem;
-      margin: 1rem;
-      max-width: calc(100vw - 2rem);
-    }
-
-    .about-content h2 {
-      font-size: 1.5rem;
-    }
-
-    .about-content .text-h5 {
-      font-size: 1rem;
-    }
+    color: var(--color-light-hover);
   }
 </style>
 
