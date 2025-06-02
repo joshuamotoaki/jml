@@ -116,7 +116,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <!-- Red Bar with 劉 -->
       <div
         class="absolute right-0 w-0 h-32 bg-red-std fuzzy-bar animate-grow-red"
-        style="top: 30%; animation-delay: 0.5s;"
+        style="top: 30%; animation-delay: 0.25s;"
       >
         <span class="zh bar-char animate-fade-in-red"> 劉 </span>
       </div>
@@ -124,7 +124,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <!-- Yellow Bar with 元 -->
       <div
         class="absolute right-0 w-0 h-32 bg-yellow-std fuzzy-bar animate-grow-yellow"
-        style="top: 55%; animation-delay: 1s;"
+        style="top: 55%; animation-delay: 0.5s;"
       >
         <span class="zh bar-char animate-fade-in-yellow"> 元 </span>
       </div>
@@ -132,7 +132,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <!-- Orange Bar with 明 -->
       <div
         class="absolute right-0 w-0 h-32 bg-orange-std fuzzy-bar animate-grow-orange"
-        style="top: 80%; animation-delay: 1.5s;"
+        style="top: 80%; animation-delay: 0.75s;"
       >
         <span class="zh bar-char animate-fade-in-orange"> 明 </span>
       </div>
@@ -282,30 +282,30 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   }
 
   .animate-grow-red {
-    animation: grow-red 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: grow-red 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 
   .animate-grow-yellow {
-    animation: grow-yellow 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: grow-yellow 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 
   .animate-grow-orange {
-    animation: grow-orange 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: grow-orange 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 
   .animate-fade-in-red {
-    animation: fade-in-character 1.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    animation-delay: 0.65s;
+    animation: fade-in-character 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.75s;
   }
 
   .animate-fade-in-yellow {
-    animation: fade-in-character 1.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    animation-delay: 1.15s;
+    animation: fade-in-character 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 1s;
   }
 
   .animate-fade-in-orange {
-    animation: fade-in-character 1.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    animation-delay: 1.65s;
+    animation: fade-in-character 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 1.25s;
   }
 
   /* Responsive adjustments */
