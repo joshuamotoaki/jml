@@ -115,24 +115,24 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <div class="absolute inset-0 z-10">
       <!-- Red Bar with 劉 -->
       <div
-        class="absolute right-0 w-0 h-32 bg-red-std fuzzy-bar animate-grow-red"
-        style="top: 30%; animation-delay: 0.25s;"
+        class="absolute right-0 w-0 h-16 md:h-32 bg-red-std fuzzy-bar animate-grow-red top-[60%] md:top-[30%]"
+        style="animation-delay: 0.25s;"
       >
         <span class="zh bar-char animate-fade-in-red"> 劉 </span>
       </div>
 
       <!-- Yellow Bar with 元 -->
       <div
-        class="absolute right-0 w-0 h-32 bg-yellow-std fuzzy-bar animate-grow-yellow"
-        style="top: 55%; animation-delay: 0.5s;"
+        class="absolute right-0 w-0 h-16 md:h-32 bg-yellow-std fuzzy-bar animate-grow-yellow top-[75%] md:top-[55%]"
+        style="animation-delay: 0.5s;"
       >
         <span class="zh bar-char animate-fade-in-yellow"> 元 </span>
       </div>
 
       <!-- Orange Bar with 明 -->
       <div
-        class="absolute right-0 w-0 h-32 bg-orange-std fuzzy-bar animate-grow-orange"
-        style="top: 80%; animation-delay: 0.75s;"
+        class="absolute right-0 w-0 h-16 md:h-32 bg-orange-std fuzzy-bar animate-grow-orange top-[90%] md:top-[80%]"
+        style="animation-delay: 0.75s;"
       >
         <span class="zh bar-char animate-fade-in-orange"> 明 </span>
       </div>
@@ -149,6 +149,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     font-size: 11rem;
     font-weight: 600;
     opacity: 0;
+  }
+
+  @media (max-width: 768px) {
+    .bar-char {
+      right: 0.2rem;
+    }
   }
 
   #cont::before {
@@ -230,7 +236,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     }
   }
 
-    /* Responsive adjustments */
   @media (max-width: 768px) {
     @keyframes grow-red {
       0% {
@@ -241,7 +246,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         opacity: 1;
       }
       100% {
-        width: 15%;
+        width: 25%;
         opacity: 1;
       }
     }
@@ -255,7 +260,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         opacity: 1;
       }
       100% {
-        width: 30%;
+        width: 35%;
         opacity: 1;
       }
     }
@@ -313,7 +318,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     .animate-fade-in-red,
     .animate-fade-in-yellow,
     .animate-fade-in-orange {
-      font-size: 4rem;
+      font-size: 5.5rem;
     }
   }
 </style>
