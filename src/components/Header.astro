@@ -16,21 +16,210 @@ const { currentPage } = Astro.props;
     </a>
     <a class="nav-button text-h4" href="/projects"> Projects </a>
     <a class="nav-button text-h4" href="/blog"> Blog </a>
-    <button class="nav-button text-h4 cursor-pointer"> About </button>
+    <button class="nav-button text-h4 cursor-pointer" id="about-btn-desktop">
+      About
+    </button>
   </nav>
 
-  <!-- TODO: Mobile -->
-  <nav class="block md:hidden">
+  <!-- Mobile -->
+  <nav class="block md:hidden px-4 py-2">
     <a href="/" class="text-h1 font-light tracking-tighter -space-x-2">
       <span class="zh"> 劉元明 </span>
       <span> JML </span>
     </a>
-    <div>
+    <div class="flex flex-col mt-2">
       <a class="nav-button text-h2" href="/projects"> Projects </a>
       <a class="nav-button text-h2" href="/blog"> Blog </a>
-      <button class="nav-button text-h2 cursor-pointer"> About </button>
+      <button class="nav-button text-h2 cursor-pointer" id="about-btn-mobile">
+        About
+      </button>
     </div>
   </nav>
 </header>
 
-<style></style>
+<!-- About Dialog -->
+<div id="about-dialog" class="about-dialog text-light">
+  <!-- SVG Filter for Noise -->
+  <svg style="position: absolute; width: 0; height: 0;">
+    <defs>
+      <filter id="dialogNoise">
+        <feTurbulence baseFrequency="0.4" numOctaves="4" stitchTiles="noStitch"
+        ></feTurbulence>
+        <feColorMatrix type="saturate" values="128"></feColorMatrix>
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="w-full h-full">
+    <button class="about-close-btn" id="close-about">
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <div class="about-content">
+      <h2 class="text-huge mb-4">Joshua Motoaki Lau</h2>
+
+      <div class="text-h4 font-light space-y-4 max-w-2xl">
+        <p>
+          I'm a student passionate about the intersection of technology and
+          creativity. Currently working with the NetSyn Lab and TigerApps to
+          build meaningful digital experiences.
+        </p>
+        <p>
+          My work spans web development, research, and creative coding, always
+          seeking to push boundaries and explore new possibilities.
+        </p>
+        <p>
+          When I'm not coding, you can find me exploring art, photography, or
+          contemplating the world as "one gigantic painting."
+        </p>
+      </div>
+
+      <div class="mt-8 flex flex-wrap gap-4">
+        <a
+          href="https://github.com/joshuamotoaki"
+          target="_blank"
+          class="nav-button text-h5 border border-current px-4 py-2 rounded"
+        >
+          GitHub
+        </a>
+        <a
+          href="https://www.linkedin.com/in/joshua-lau26/"
+          target="_blank"
+          class="nav-button text-h5 border border-current px-4 py-2 rounded"
+        >
+          LinkedIn
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .about-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 70, 150, 0.8);
+    backdrop-filter: blur(16px);
+    z-index: 1000;
+    opacity: 0;
+    padding: 1rem;
+    visibility: hidden;
+    transition:
+      opacity 0.3s ease,
+      visibility 0.3s ease;
+  }
+
+  .about-dialog.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .about-dialog::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    filter: url(#dialogNoise);
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .about-dialog.open .about-dialog-content {
+    transform: translateY(0);
+  }
+
+  .about-content {
+    position: relative;
+  }
+
+  .about-close-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 1rem;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+    z-index: 3;
+  }
+
+  .about-close-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    .about-dialog-content {
+      padding: 1.5rem;
+      margin: 1rem;
+      max-width: calc(100vw - 2rem);
+    }
+
+    .about-content h2 {
+      font-size: 1.5rem;
+    }
+
+    .about-content .text-h5 {
+      font-size: 1rem;
+    }
+  }
+</style>
+
+<script>
+  // Get dialog elements
+  const dialog = document.getElementById("about-dialog");
+  const aboutBtnDesktop = document.getElementById("about-btn-desktop");
+  const aboutBtnMobile = document.getElementById("about-btn-mobile");
+  const closeBtn = document.getElementById("close-about");
+
+  // Function to open dialog
+  function openDialog() {
+    dialog?.classList.add("open");
+    document.body.style.overflow = "hidden"; // Prevent background scrolling
+  }
+
+  // Function to close dialog
+  function closeDialog() {
+    dialog?.classList.remove("open");
+    document.body.style.overflow = ""; // Restore scrolling
+  }
+
+  // Event listeners
+  aboutBtnDesktop?.addEventListener("click", openDialog);
+  aboutBtnMobile?.addEventListener("click", openDialog);
+  closeBtn?.addEventListener("click", closeDialog);
+
+  // Close dialog when clicking outside content
+  dialog?.addEventListener("click", (e) => {
+    if (e.target === dialog) {
+      closeDialog();
+    }
+  });
+
+  // Close dialog with Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && dialog?.classList.contains("open")) {
+      closeDialog();
+    }
+  });
+
+  openDialog();
+</script>
