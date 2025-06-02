@@ -6,43 +6,51 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 <BaseLayout>
   <Header currentPage="home" />
 
+  <!-- Noise Overlay -->
   <div id="cont" class="relative w-full h-screen overflow-hidden bg-light">
     <svg style="position: absolute; width: 0; height: 0;">
       <defs>
         <filter id="pageNoise">
-          <feTurbulence baseFrequency="0.3" numOctaves="3" stitchTiles="noStitch"/>
-          <feColorMatrix type="saturate" values="0"/>
+          <feTurbulence
+            baseFrequency="0.3"
+            numOctaves="3"
+            stitchTiles="noStitch"></feTurbulence>
+          <feColorMatrix type="saturate" values="0"></feColorMatrix>
         </filter>
       </defs>
     </svg>
 
+    <!-- Name -->
+    <div class="absolute bottom-0 left-0 rotate-270 origin-top-left">
+      <h2 class="text-h1 italic font-thin">Joshua Motoaki Lau</h2>
+    </div>
+
     <!-- Animated Color Bars -->
     <div class="absolute inset-0 z-10">
       <!-- Red Bar with 劉 -->
-      <div class="absolute right-0 w-0 h-32 bg-red-std fuzzy-bar animate-grow-red" 
-           style="top: 40%; animation-delay: 0.5s;">
-        <span class="bar-char animate-fade-in-red">
-          劉
-        </span>
+      <div
+        class="absolute right-0 w-0 h-32 bg-red-std fuzzy-bar animate-grow-red"
+        style="top: 40%; animation-delay: 0.5s;"
+      >
+        <span class="bar-char animate-fade-in-red"> 劉 </span>
       </div>
-      
+
       <!-- Yellow Bar with 元 -->
-      <div class="absolute right-0 w-0 h-32 bg-yellow-std fuzzy-bar animate-grow-yellow" 
-           style="top: 60%; animation-delay: 1s;">
-        <span class="bar-char animate-fade-in-yellow">
-          元
-        </span>
+      <div
+        class="absolute right-0 w-0 h-32 bg-yellow-std fuzzy-bar animate-grow-yellow"
+        style="top: 60%; animation-delay: 1s;"
+      >
+        <span class="bar-char animate-fade-in-yellow"> 元 </span>
       </div>
-      
+
       <!-- Orange Bar with 明 -->
-      <div class="absolute right-0 w-0 h-32 bg-orange-std fuzzy-bar animate-grow-orange" 
-           style="top: 80%; animation-delay: 1.5s;">
-        <span class="bar-char animate-fade-in-orange">
-          明
-        </span>
+      <div
+        class="absolute right-0 w-0 h-32 bg-orange-std fuzzy-bar animate-grow-orange"
+        style="top: 80%; animation-delay: 1.5s;"
+      >
+        <span class="bar-char animate-fade-in-orange"> 明 </span>
       </div>
     </div>
-
   </div>
 </BaseLayout>
 
