@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+:root {
+  --font-pp-editorial: "PP Editorial New", Georgia, serif;
+  --font-noto-serif-jp: "Noto Serif JP", serif;
+  --font-mixed: "PP Editorial New", "Noto Serif JP", Georgia, serif;
+}
+
 @theme {
   --color-light: #f0f0f0;
   --color-light-hover: #d0d0d0;
@@ -15,6 +21,30 @@
   --color-violet-std: #9b5de5;
 
   --duration-std: 100ms;
+}
+
+body {
+  font-family: var(--font-pp-editorial);
+}
+
+.zh {
+  font-family: var(--font-noto-serif-jp);
+}
+
+.font-pp-editorial {
+  font-family: var(--font-pp-editorial);
+}
+
+.font-ultralight {
+  font-weight: 200;
+}
+
+.font-regular {
+  font-weight: 400;
+}
+
+.font-ultrabold {
+  font-weight: 800;
 }
 
 .text-huge {
