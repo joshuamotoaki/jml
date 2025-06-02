@@ -21,8 +21,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     </svg>
 
     <!-- Name -->
-    <div class="absolute bottom-0 left-2 rotate-270 origin-top-left z-50">
-      <h2 class="text-h2 italic font-ultralight">Joshua Motoaki Lau</h2>
+    <div
+      class="absolute bottom-[30%] md:bottom-0 left-2 rotate-270 origin-top-left z-50"
+    >
+      <h2 class="text-h3 md:text-h2 italic font-ultralight">
+        Joshua Motoaki Lau
+      </h2>
     </div>
 
     <div
@@ -71,6 +75,39 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="absolute bottom-[5%] left-2 w-[35%] md:hidden space-y-4 pt-4">
+      <div class="flex flex-col">
+        <h4 class="font-bold">Social Media</h4>
+        <a
+          class="nav-button"
+          target="_blank"
+          href="https://github.com/joshuamotoaki"
+        >
+          GitHub
+        </a>
+        <a
+          class="nav-button"
+          target="_blank"
+          href="https://www.linkedin.com/in/joshua-lau26/"
+        >
+          LinkedIn
+        </a>
+      </div>
+      <div class="flex flex-col">
+        <h4 class="font-bold">Organizations</h4>
+        <a
+          class="nav-button"
+          target="_blank"
+          href="https://netsyn.princeton.edu/"
+        >
+          NetSyn Lab
+        </a>
+        <a class="nav-button" target="_blank" href="https://tigerapps.org/">
+          TigerApps
+        </a>
       </div>
     </div>
 
@@ -232,7 +269,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         opacity: 1;
       }
       100% {
-        width: 70%;
+        width: 60%;
         opacity: 1;
       }
     }
