@@ -202,13 +202,11 @@ const { currentPage } = Astro.props;
   // Function to open dialog
   function openDialog() {
     dialog?.classList.add("open");
-    document.body.style.overflow = "hidden"; // Prevent background scrolling
   }
 
   // Function to close dialog
   function closeDialog() {
     dialog?.classList.remove("open");
-    document.body.style.overflow = ""; // Restore scrolling
   }
 
   // Event listeners
