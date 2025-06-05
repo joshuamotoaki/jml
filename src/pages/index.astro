@@ -29,17 +29,17 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       </h2>
     </div>
 
-    <div
+    <main
       class="hidden md:block absolute bottom-1/2 left-[20%] w-[40%] top-[35%] z-50"
     >
-      <div class="w-full h-full flex flex-col gap-2">
+      <section class="w-full h-full flex flex-col gap-2">
         <h3 class="text-h5">
           There is no reason not to consider the world as one gigantic painting.
         </h3>
         <div class="text-h6 text-dark-hover">- Robert Rauschenberg</div>
         <div class="flex-1 flex justify-end">
           <div class="space-y-4 pt-4">
-            <div class="flex flex-col">
+            <nav class="flex flex-col">
               <h4 class="font-bold">Social Media</h4>
               <a
                 class="nav-button"
@@ -55,8 +55,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
               >
                 LinkedIn
               </a>
-            </div>
-            <div class="flex flex-col">
+            </nav>
+            <nav class="flex flex-col">
               <h4 class="font-bold">Organizations</h4>
               <a
                 class="nav-button"
@@ -72,75 +72,76 @@ import BaseLayout from "../layouts/BaseLayout.astro";
               >
                 TigerApps
               </a>
-            </div>
+            </nav>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <div class="absolute bottom-[5%] left-2 w-[35%] md:hidden space-y-4 pt-4">
-      <div class="flex flex-col">
-        <h4 class="font-bold">Social Media</h4>
-        <a
-          class="nav-button"
-          target="_blank"
-          href="https://github.com/joshuamotoaki"
-        >
-          GitHub
-        </a>
-        <a
-          class="nav-button"
-          target="_blank"
-          href="https://www.linkedin.com/in/joshua-lau26/"
-        >
-          LinkedIn
-        </a>
-      </div>
-      <div class="flex flex-col">
-        <h4 class="font-bold">Organizations</h4>
-        <a
-          class="nav-button"
-          target="_blank"
-          href="https://netsyn.princeton.edu/"
-        >
-          NetSyn Lab
-        </a>
-        <a class="nav-button" target="_blank" href="https://tigerapps.org/">
-          TigerApps
-        </a>
-      </div>
-    </div>
-
-    <!-- Animated Color Bars -->
-    <div class="absolute inset-0 z-10">
-      <!-- Red Bar with 劉 -->
-      <div
-        class="absolute right-0 w-0 h-16 md:h-32 bg-red-std fuzzy-bar animate-grow-red top-[60%] md:top-[30%]"
-        style="animation-delay: 0.25s;"
+      <section
+        class="absolute bottom-[5%] left-2 w-[35%] md:hidden space-y-4 pt-4"
       >
-        <span class="zh bar-char animate-fade-in-red"> 劉 </span>
-      </div>
+        <div class="flex flex-col">
+          <h4 class="font-bold">Social Media</h4>
+          <a
+            class="nav-button"
+            target="_blank"
+            href="https://github.com/joshuamotoaki"
+          >
+            GitHub
+          </a>
+          <a
+            class="nav-button"
+            target="_blank"
+            href="https://www.linkedin.com/in/joshua-lau26/"
+          >
+            LinkedIn
+          </a>
+        </div>
+        <div class="flex flex-col">
+          <h4 class="font-bold">Organizations</h4>
+          <a
+            class="nav-button"
+            target="_blank"
+            href="https://netsyn.princeton.edu/"
+          >
+            NetSyn Lab
+          </a>
+          <a class="nav-button" target="_blank" href="https://tigerapps.org/">
+            TigerApps
+          </a>
+        </div>
+      </section>
 
-      <!-- Yellow Bar with 元 -->
-      <div
-        class="absolute right-0 w-0 h-16 md:h-32 bg-yellow-std fuzzy-bar animate-grow-yellow top-[75%] md:top-[55%]"
-        style="animation-delay: 0.5s;"
-      >
-        <span class="zh bar-char animate-fade-in-yellow"> 元 </span>
-      </div>
+      <!-- Animated Color Bars -->
+      <section class="absolute inset-0 z-10">
+        <!-- Red Bar with 劉 -->
+        <div
+          class="absolute right-0 w-0 h-16 md:h-32 bg-red-std fuzzy-bar animate-grow-red top-[60%] md:top-[30%]"
+          style="animation-delay: 0.25s;"
+        >
+          <span class="zh bar-char animate-fade-in-red"> 劉 </span>
+        </div>
 
-      <!-- Orange Bar with 明 -->
-      <div
-        class="absolute right-0 w-0 h-16 md:h-32 bg-orange-std fuzzy-bar animate-grow-orange top-[90%] md:top-[80%]"
-        style="animation-delay: 0.75s;"
-      >
-        <span class="zh bar-char animate-fade-in-orange"> 明 </span>
-      </div>
-    </div>
+        <!-- Yellow Bar with 元 -->
+        <div
+          class="absolute right-0 w-0 h-16 md:h-32 bg-yellow-std fuzzy-bar animate-grow-yellow top-[75%] md:top-[55%]"
+          style="animation-delay: 0.5s;"
+        >
+          <span class="zh bar-char animate-fade-in-yellow"> 元 </span>
+        </div>
+
+        <!-- Orange Bar with 明 -->
+        <div
+          class="absolute right-0 w-0 h-16 md:h-32 bg-orange-std fuzzy-bar animate-grow-orange top-[90%] md:top-[80%]"
+          style="animation-delay: 0.75s;"
+        >
+          <span class="zh bar-char animate-fade-in-orange"> 明 </span>
+        </div>
+      </section>
+    </main>
   </div>
-</BaseLayout>
 
-<style lang="postcss">
+  <style lang="postcss">
   .bar-char {
     position: absolute;
     right: 1rem;
@@ -322,3 +323,4 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     }
   }
 </style>
+</BaseLayout>
