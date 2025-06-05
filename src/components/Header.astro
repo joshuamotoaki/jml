@@ -2,15 +2,16 @@
 // Header.astro
 export interface Props {
   currentPage?: string;
+  textColor?: string;
 }
 
-const { currentPage } = Astro.props;
+const { currentPage, textColor = "text-dark" } = Astro.props;
 ---
 
-<header class="fixed top-0 left-0 w-full z-50">
+<header class=`fixed top-0 left-0 h-12 w-full z-50 ${textColor}`>
   <!-- Desktop -->
-  <nav class="hidden md:flex items-start justify-between px-4 py-1">
-    <a href="/" class="text-huge font-light tracking-tighter -space-x-3">
+  <nav class="hidden md:flex items-start justify-between px-4 py-1 h-12">
+    <a href="/" class="text-huge font-light tracking-tighter -space-x-3 h-fit">
       <span class="zh"> 劉元明 </span>
       <span> JML </span>
     </a>
@@ -22,8 +23,8 @@ const { currentPage } = Astro.props;
   </nav>
 
   <!-- Mobile -->
-  <nav class="flex md:hidden px-4 py-2 justify-between">
-    <a href="/" class="text-h1 font-light tracking-tighter -space-x-2">
+  <nav class="flex md:hidden px-4 py-2 justify-between h-12">
+    <a href="/" class="text-h1 font-light tracking-tighter -space-x-2 h-fit">
       <span class="zh"> 劉元明 </span>
       <span> JML </span>
     </a>
