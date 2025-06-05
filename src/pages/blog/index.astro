@@ -3,5 +3,11 @@ import ItemPage from "../../layouts/ItemPage.astro";
 ---
 
 <ItemPage currentPage="blog">
-  <h1 class="text-h2 md:text-h1 font-ultralight">Blog</h1>
+  <div class="flex">
+    <h1 class="text-h2 md:text-h1 italic bg-indigo-std/40 w-fit p-6">Blog</h1>
+    <div class="flex-1 bg-blue-std/40">
+      <!-- This will be the search bar -->
+    </div>
+  </div>
+  <main class="bg-blue-std"></main>
 </ItemPage>
