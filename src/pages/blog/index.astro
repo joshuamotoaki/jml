@@ -7,7 +7,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   <Header currentPage="blog" />
 
   <!-- Noise Overlay -->
-  <div id="cont" class="relative w-full h-screen overflow-hidden bg-light">
+  <div id="cont" class="relative w-full min-h-screen bg-light">
     <svg style="position: absolute; width: 0; height: 0;">
       <defs>
         <filter id="pageNoise">
@@ -19,6 +19,15 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         </filter>
       </defs>
     </svg>
+
+    <main class="pt-28 pl-4 pr-20 md:pr-4">
+      <p>
+        Lorem ipsum dolor sit amet, consectetur adipisicing elit. Asperiores
+        unde vero mollitia natus ab cupiditate cumque quo aliquid at? Hic
+        recusandae dignissimos in accusantium neque officia ut sequi, obcaecati
+        nisi.
+      </p>
+    </main>
   </div>
 </BaseLayout>
 
@@ -29,7 +38,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vh;
+    height: 100%;
     background: rgba(
       0,
       0,
