@@ -59,10 +59,15 @@ body {
   font-size: var(--text-huge);
 }
 
-.nav-button {
+.nav-button,
+.nav-button-dark {
   cursor: pointer;
   text-decoration-line: underline;
   transition-duration: var(--duration-std);
+}
+
+.nav-button-dark:hover {
+  color: var(--color-light-hover);
 }
 
 .nav-button:hover {
