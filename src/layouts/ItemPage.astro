@@ -1,0 +1,51 @@
+---
+import Header from "../components/Header.astro";
+import BaseLayout from "./BaseLayout.astro";
+
+export interface Props {
+  currentPage?: string;
+}
+
+const { currentPage } = Astro.props;
+---
+
+<BaseLayout>
+  <Header {currentPage} isDark={true} />
+
+  <!-- Noise Overlay -->
+  <div id="cont" class="relative w-full min-h-screen bg-dark text-light">
+    <svg style="position: absolute; width: 0; height: 0;">
+      <defs>
+        <filter id="pageNoise">
+          <feTurbulence baseFrequency="0.4" numOctaves="4"></feTurbulence>
+          <feColorMatrix type="saturate" values="2"></feColorMatrix>
+        </filter>
+      </defs>
+    </svg>
+
+    <main class="pt-28 pl-4 pr-20 md:pr-4 z-[100]">
+      <slot />
+    </main>
+  </div>
+</BaseLayout>
+
+<style>
+  #cont::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100%;
+    background: rgba(
+      0,
+      0,
+      0,
+      0.1
+    ); /* Not sure why Safari needs this but it does */
+    filter: url(#pageNoise);
+    opacity: 0.2;
+    pointer-events: none;
+    z-index: 50;
+  }
+</style>
