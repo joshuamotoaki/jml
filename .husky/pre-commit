@@ -1,0 +1,5 @@
+npx lint-staged
+files=$(git diff --cached --name-only --diff-filter=ACMR)
+if [ -n "$files" ]; then
+  git add $files
+fi
