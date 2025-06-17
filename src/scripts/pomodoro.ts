@@ -111,7 +111,18 @@ export class PomodoroTimer {
     const cont = document.getElementById("cont");
     const color = this.settings[this.currentMode as keyof TimerSettings].color;
     if (cont) {
-      cont.style.backgroundColor = `var(--color-${color}-std)`;
+      // Map color names to the actual CSS variable values
+      const colorMap: { [key: string]: string } = {
+        red: '#e63946',
+        orange: '#f4845f',
+        yellow: '#ffd166',
+        green: '#06d6a0',
+        blue: '#118ab2',
+        indigo: '#5c6bc0',
+        violet: '#9b5de5'
+      };
+      
+      cont.style.backgroundColor = colorMap[color] || '#e63946';
     }
   }
 
