@@ -1,3 +1,12 @@
+const DEFAULTS = {
+  focus: { time: 25, color: "red" },
+  short: { time: 5, color: "green" },
+  long: { time: 15, color: "blue" },
+};
+
+const GONG_URL = "/gong.mp3";
+const GONG_TIME = 5000;
+
 export interface TimerSettings {
   focus: { time: number; color: string };
   short: { time: number; color: string };
@@ -10,12 +19,9 @@ export class PomodoroTimer {
   private isRunning: boolean = false;
   private timerId: number | null = null;
   private settings: TimerSettings;
+  private audio: HTMLAudioElement;
 
-  private readonly defaultSettings: TimerSettings = {
-    focus: { time: 25, color: "red" },
-    short: { time: 5, color: "green" },
-    long: { time: 15, color: "blue" },
-  };
+  private readonly defaultSettings: TimerSettings = DEFAULTS;
 
   constructor() {
     // Load settings from localStorage or use defaults
@@ -23,6 +29,10 @@ export class PomodoroTimer {
     this.settings = savedSettings
       ? JSON.parse(savedSettings)
       : { ...this.defaultSettings };
+
+    // Initialize audio
+    this.audio = new Audio(GONG_URL);
+    this.audio.volume = 0.5; // Set volume to 50%
   }
 
   init() {
@@ -113,16 +123,16 @@ export class PomodoroTimer {
     if (cont) {
       // Map color names to the actual CSS variable values
       const colorMap: { [key: string]: string } = {
-        red: '#e63946',
-        orange: '#f4845f',
-        yellow: '#ffd166',
-        green: '#06d6a0',
-        blue: '#118ab2',
-        indigo: '#5c6bc0',
-        violet: '#9b5de5'
+        red: "#e63946",
+        orange: "#f4845f",
+        yellow: "#ffd166",
+        green: "#06d6a0",
+        blue: "#118ab2",
+        indigo: "#5c6bc0",
+        violet: "#9b5de5",
       };
-      
-      cont.style.backgroundColor = colorMap[color] || '#e63946';
+
+      cont.style.backgroundColor = colorMap[color] || "#e63946";
     }
   }
 
@@ -145,6 +155,7 @@ export class PomodoroTimer {
         this.updateDisplay();
       } else {
         this.stopTimer();
+        this.playGong();
       }
     }, 1000);
   }
@@ -271,5 +282,18 @@ export class PomodoroTimer {
     // Close dialog
     const settingsDialog = document.getElementById("settings-dialog");
     settingsDialog?.classList.remove("open");
+  }
+
+  private playGong() {
+    this.audio.currentTime = 0;
+
+    this.audio.play().catch((e) => {
+      console.error("Failed to play gong sound:", e);
+    });
+
+    setTimeout(() => {
+      this.audio.pause();
+      this.audio.currentTime = 0;
+    }, GONG_TIME);
   }
 }
