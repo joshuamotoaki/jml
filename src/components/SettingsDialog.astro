@@ -1,0 +1,205 @@
+---
+export interface Props {
+  id?: string;
+}
+
+const { id = "settings-dialog" } = Astro.props;
+---
+
+<div id={id} class="settings-dialog text-light">
+  <div class="dialog-content">
+    <button class="dialog-close-btn" id="close-settings">
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <h2 class="text-h3 mb-8">Timer Settings</h2>
+
+    <div class="settings-grid">
+      <!-- Focus Settings -->
+      <div class="setting-group">
+        <h3 class="text-h5 mb-4">Focus</h3>
+        <label class="block mb-2">
+          Duration (minutes)
+          <input
+            type="number"
+            id="focus-time"
+            class="time-input"
+            value="25"
+            min="1"
+            max="60"
+          />
+        </label>
+        <label class="block">
+          Color
+          <select id="focus-color" class="color-select">
+            <option value="red" selected>Red</option>
+            <option value="orange">Orange</option>
+            <option value="yellow">Yellow</option>
+            <option value="green">Green</option>
+            <option value="blue">Blue</option>
+            <option value="indigo">Indigo</option>
+            <option value="violet">Violet</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- Short Break Settings -->
+      <div class="setting-group">
+        <h3 class="text-h5 mb-4">Short Break</h3>
+        <label class="block mb-2">
+          Duration (minutes)
+          <input
+            type="number"
+            id="short-time"
+            class="time-input"
+            value="5"
+            min="1"
+            max="60"
+          />
+        </label>
+        <label class="block">
+          Color
+          <select id="short-color" class="color-select">
+            <option value="red">Red</option>
+            <option value="orange">Orange</option>
+            <option value="yellow">Yellow</option>
+            <option value="green" selected>Green</option>
+            <option value="blue">Blue</option>
+            <option value="indigo">Indigo</option>
+            <option value="violet">Violet</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- Long Break Settings -->
+      <div class="setting-group">
+        <h3 class="text-h5 mb-4">Long Break</h3>
+        <label class="block mb-2">
+          Duration (minutes)
+          <input
+            type="number"
+            id="long-time"
+            class="time-input"
+            value="15"
+            min="1"
+            max="60"
+          />
+        </label>
+        <label class="block">
+          Color
+          <select id="long-color" class="color-select">
+            <option value="red">Red</option>
+            <option value="orange">Orange</option>
+            <option value="yellow">Yellow</option>
+            <option value="green">Green</option>
+            <option value="blue" selected>Blue</option>
+            <option value="indigo">Indigo</option>
+            <option value="violet">Violet</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <button class="save-btn mt-8" id="save-settings">Save Settings</button>
+  </div>
+</div>
+
+<style>
+  .settings-dialog {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(12px);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.2s ease,
+      visibility 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .settings-dialog.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .dialog-content {
+    position: relative;
+    background: var(--color-dark);
+    padding: 3rem;
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 2px solid var(--color-light);
+  }
+
+  .dialog-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-light);
+    transition: color 0.2s ease;
+  }
+
+  .dialog-close-btn:hover {
+    color: var(--color-light-hover);
+  }
+
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+  }
+
+  .setting-group {
+    padding: 1rem;
+    border: 1px solid var(--color-light);
+  }
+
+  .time-input,
+  .color-select {
+    display: block;
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    background: var(--color-dark);
+    border: 1px solid var(--color-light);
+    color: var(--color-light);
+    font-family: inherit;
+  }
+
+  .save-btn {
+    padding: 0.5rem 2rem;
+    background: var(--color-light);
+    color: var(--color-dark);
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    font-size: var(--text-h6);
+  }
+
+  .save-btn:hover {
+    opacity: 0.8;
+  }
+</style>

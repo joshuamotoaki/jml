@@ -1,5 +1,10 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import PomodoroTimer from "../components/PomodoroTimer.astro";
+import ModeButtons from "../components/ModeButtons.astro";
+import TimerControls from "../components/TimerControls.astro";
+import SettingsDialog from "../components/SettingsDialog.astro";
+import ConfirmDialog from "../components/ConfirmDialog.astro";
 ---
 
 <BaseLayout>
@@ -22,9 +27,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <div
         class="bg-dark text-light w-full h-full flex flex-col items-center justify-center"
       >
-        <!-- Flex Positioned in the center -->
         <div class="flex flex-col items-center justify-center gap-4">
-          <!-- Absolutely Positioned -->
+          <ModeButtons className="mb-8" />
+          <PomodoroTimer />
+          <TimerControls className="mt-8" />
+
           <h1 class="absolute top-4 left-4 text-huge italic font-bold">
             Pomodoro
           </h1>
@@ -37,9 +44,24 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     </main>
   </div>
 
+  <!-- Settings Dialog -->
+  <SettingsDialog />
+
+  <!-- Reset Confirmation Dialog -->
+  <ConfirmDialog
+    id="reset-dialog"
+    title="Reset Timer?"
+    message="Are you sure you want to reset the current timer?"
+    confirmText="Reset"
+    cancelText="Cancel"
+    confirmId="confirm-reset"
+    cancelId="cancel-reset"
+  />
+
   <style>
     #cont {
-      background-color: var(--color-green-std);
+      background-color: var(--color-red-std);
+      transition: background-color 0.3s ease;
     }
 
     #cont::before {
@@ -61,4 +83,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       z-index: 50;
     }
   </style>
+
+  <script>
+    import { PomodoroTimer } from "../scripts/pomodoro";
+
+    const timer = new PomodoroTimer();
+    timer.init();
+  </script>
 </BaseLayout>

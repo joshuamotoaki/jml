@@ -1,0 +1,96 @@
+---
+export interface Props {
+  id: string;
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  confirmId?: string;
+  cancelId?: string;
+}
+
+const {
+  id,
+  title,
+  message,
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  confirmId = "confirm-btn",
+  cancelId = "cancel-btn",
+} = Astro.props;
+---
+
+<div id={id} class="confirm-dialog text-light">
+  <div class="dialog-content small">
+    <h3 class="text-h4 mb-4">{title}</h3>
+    <p class="mb-6">{message}</p>
+    <div class="flex gap-4 justify-center">
+      <button class="confirm-btn" id={confirmId}>{confirmText}</button>
+      <button class="cancel-btn" id={cancelId}>{cancelText}</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .confirm-dialog {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(12px);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.2s ease,
+      visibility 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .confirm-dialog.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .dialog-content {
+    position: relative;
+    background: var(--color-dark);
+    padding: 3rem;
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 2px solid var(--color-light);
+  }
+
+  .dialog-content.small {
+    max-width: 400px;
+  }
+
+  .confirm-btn,
+  .cancel-btn {
+    padding: 0.5rem 2rem;
+    background: var(--color-light);
+    color: var(--color-dark);
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    font-size: var(--text-h6);
+  }
+
+  .confirm-btn:hover,
+  .cancel-btn:hover {
+    opacity: 0.8;
+  }
+
+  .cancel-btn {
+    background: transparent;
+    color: var(--color-light);
+    border: 2px solid var(--color-light);
+  }
+</style>

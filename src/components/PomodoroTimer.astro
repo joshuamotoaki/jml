@@ -1,0 +1,19 @@
+---
+export interface Props {
+  initialTime?: string;
+}
+
+const { initialTime = "25:00" } = Astro.props;
+---
+
+<div class="timer-display text-huge font-light" id="timer-display">
+  {initialTime}
+</div>
+
+<style>
+  .timer-display {
+    font-variant-numeric: tabular-nums;
+    min-width: 300px;
+    text-align: center;
+  }
+</style>

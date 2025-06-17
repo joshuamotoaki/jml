@@ -1,0 +1,46 @@
+---
+export interface Props {
+  className?: string;
+}
+
+const { className = "" } = Astro.props;
+---
+
+<div class={`flex gap-4 ${className}`}>
+  <button
+    class="mode-btn active"
+    data-mode="focus"
+    data-time="25"
+    data-color="red"
+  >
+    Focus
+  </button>
+  <button class="mode-btn" data-mode="short" data-time="5" data-color="green">
+    Short Break
+  </button>
+  <button class="mode-btn" data-mode="long" data-time="15" data-color="blue">
+    Long Break
+  </button>
+</div>
+
+<style>
+  .mode-btn {
+    padding: 0.5rem 1.5rem;
+    background: var(--color-dark);
+    border: 2px solid var(--color-light);
+    color: var(--color-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: var(--text-h6);
+  }
+
+  .mode-btn:hover {
+    background: var(--color-light);
+    color: var(--color-dark);
+  }
+
+  .mode-btn.active {
+    background: var(--color-light);
+    color: var(--color-dark);
+  }
+</style>
