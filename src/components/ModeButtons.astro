@@ -6,7 +6,7 @@ export interface Props {
 const { className = "" } = Astro.props;
 ---
 
-<div class={`flex gap-4 ${className}`}>
+<div class={`flex flex-wrap justify-center gap-2 md:gap-4 ${className}`}>
   <button
     class="mode-btn active"
     data-mode="focus"
@@ -25,13 +25,19 @@ const { className = "" } = Astro.props;
 
 <style>
   .mode-btn {
-    padding: 0.5rem 1.5rem;
+    padding: 0.5rem 1rem;
     background: var(--color-dark);
     border: 2px solid var(--color-light);
     color: var(--color-light);
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: var(--text-h6);
+  }
+
+  @media (min-width: 768px) {
+    .mode-btn {
+      padding: 0.5rem 1.5rem;
+    }
   }
 
   .mode-btn:hover {
