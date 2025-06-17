@@ -19,40 +19,46 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <main
       class="bg-dark/10 w-full h-full flex items-center justify-center p-16"
     >
-      <div class="bg-dark text-light w-full h-full">
-        <h1 class="absolute top-4 left-4 text-huge italic font-bold">
-          Pomodoro
-        </h1>
-        <p class="absolute bottom-4 right-4">
-          Built by
-          <a href="/" class="underline"> Joshua Motoaki Lau </a>
-        </p>
+      <div
+        class="bg-dark text-light w-full h-full flex flex-col items-center justify-center"
+      >
+        <!-- Flex Positioned in the center -->
+        <div class="flex flex-col items-center justify-center gap-4">
+          <!-- Absolutely Positioned -->
+          <h1 class="absolute top-4 left-4 text-huge italic font-bold">
+            Pomodoro
+          </h1>
+          <p class="absolute bottom-4 right-4">
+            Built by
+            <a href="/" class="underline"> Joshua Motoaki Lau </a>
+          </p>
+        </div>
       </div>
     </main>
   </div>
+
+  <style>
+    #cont {
+      background-color: var(--color-green-std);
+    }
+
+    #cont::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(
+        0,
+        0,
+        0,
+        0.1
+      ); /* Not sure why Safari needs this but it does */
+      filter: url(#pageNoise);
+      opacity: 0.2;
+      pointer-events: none;
+      z-index: 50;
+    }
+  </style>
 </BaseLayout>
-
-<style>
-  #cont {
-    background-color: var(--color-red-std);
-  }
-
-  #cont::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(
-      0,
-      0,
-      0,
-      0.1
-    ); /* Not sure why Safari needs this but it does */
-    filter: url(#pageNoise);
-    opacity: 0.2;
-    pointer-events: none;
-    z-index: 50;
-  }
-</style>
