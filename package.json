@@ -17,9 +17,12 @@
     ]
   },
   "dependencies": {
+    "@astrojs/svelte": "^7.1.0",
     "@tailwindcss/vite": "^4.1.7",
     "astro": "^5.8.2",
-    "tailwindcss": "^4.1.7"
+    "svelte": "^5.34.7",
+    "tailwindcss": "^4.1.7",
+    "typescript": "^5.8.3"
   },
   "devDependencies": {
     "husky": "^9.1.7",

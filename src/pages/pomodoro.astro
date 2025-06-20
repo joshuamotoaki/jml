@@ -4,7 +4,11 @@ import PomodoroTimer from "../components/PomodoroTimer.astro";
 import ModeButtons from "../components/ModeButtons.astro";
 import TimerControls from "../components/TimerControls.astro";
 import SettingsDialog from "../components/SettingsDialog.astro";
+import StatsDialog from "../components/StatsDialog.astro";
+import FocusCircles from "../components/FocusCircles.astro";
 import ConfirmDialog from "../components/ConfirmDialog.astro";
+
+import Pomodoro from "../components/svelte/Pomodoro.svelte";
 ---
 
 <BaseLayout>
@@ -28,6 +32,9 @@ import ConfirmDialog from "../components/ConfirmDialog.astro";
         class="bg-dark text-light w-full h-full flex flex-col items-center justify-center"
       >
         <div class="flex flex-col items-center justify-center gap-4">
+          <Pomodoro client:load />
+
+          <!-- <FocusCircles className="mb-4" /> -->
           <ModeButtons className="mb-8" />
           <PomodoroTimer />
           <TimerControls className="mt-8" />
@@ -50,6 +57,9 @@ import ConfirmDialog from "../components/ConfirmDialog.astro";
 
   <!-- Settings Dialog -->
   <SettingsDialog />
+
+  <!-- Stats Dialog -->
+  <StatsDialog />
 
   <!-- Reset Confirmation Dialog -->
   <ConfirmDialog
@@ -93,5 +103,8 @@ import ConfirmDialog from "../components/ConfirmDialog.astro";
 
     const timer = new PomodoroTimer();
     timer.init();
+
+    // Make timer instance globally available for components
+    (window as any).pomodoroTimer = timer;
   </script>
 </BaseLayout>

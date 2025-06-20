@@ -1,0 +1,36 @@
+---
+export interface Props {
+  className?: string;
+}
+
+const { className = "" } = Astro.props;
+---
+
+<div class={`flex justify-center gap-2 ${className}`} id="focus-circles">
+  <div class="focus-circle" data-index="0"></div>
+  <div class="focus-circle" data-index="1"></div>
+  <div class="focus-circle" data-index="2"></div>
+  <div class="focus-circle" data-index="3"></div>
+</div>
+
+<style>
+  .focus-circle {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--color-light);
+    background: transparent;
+    transition: background-color 0.3s ease;
+  }
+
+  .focus-circle.filled {
+    background: var(--color-light);
+  }
+
+  @media (min-width: 768px) {
+    .focus-circle {
+      width: 20px;
+      height: 20px;
+    }
+  }
+</style>

@@ -1,0 +1,448 @@
+---
+export interface Props {
+  id?: string;
+}
+
+const { id = "stats-dialog" } = Astro.props;
+---
+
+<div id={id} class="stats-dialog text-light">
+  <div class="dialog-content">
+    <button class="dialog-close-btn" id="close-stats">
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <h2 class="text-h3 mb-8">Statistics</h2>
+
+    <!-- Today's Summary -->
+    <div class="stats-section">
+      <h3 class="text-h5 mb-4">Today's Summary</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-value" id="today-focus-time">0</span>
+          <span class="stat-label">minutes focused</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="today-sessions">0</span>
+          <span class="stat-label">total sessions</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="current-streak">0</span>
+          <span class="stat-label">day streak</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Overview -->
+    <div class="stats-section mt-8">
+      <h3 class="text-h5 mb-4">This Week</h3>
+      <div class="week-chart" id="week-chart">
+        <!-- Chart will be dynamically generated -->
+      </div>
+      <div class="week-summary mt-4">
+        <p><span id="week-total-time">0</span> total minutes focused</p>
+        <p><span id="week-total-sessions">0</span> sessions completed</p>
+      </div>
+    </div>
+
+    <!-- Recent Sessions -->
+    <div class="stats-section mt-8">
+      <h3 class="text-h5 mb-4">Recent Sessions</h3>
+      <div class="sessions-list" id="recent-sessions">
+        <!-- Sessions will be dynamically generated -->
+      </div>
+    </div>
+
+    <!-- Export Button -->
+    <button class="export-btn mt-8" id="export-stats">Export Data (CSV)</button>
+  </div>
+</div>
+
+<style>
+  .stats-dialog {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(12px);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.2s ease,
+      visibility 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .stats-dialog.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .dialog-content {
+    position: relative;
+    background: var(--color-dark);
+    padding: 3rem;
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 2px solid var(--color-light);
+  }
+
+  .dialog-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-light);
+    transition: color 0.2s ease;
+  }
+
+  .dialog-close-btn:hover {
+    color: var(--color-light-hover);
+  }
+
+  .stats-section {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 2rem;
+  }
+
+  .stats-section:last-child {
+    border-bottom: none;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+
+  .stat-card {
+    padding: 1.5rem;
+    border: 1px solid var(--color-light);
+    text-align: center;
+  }
+
+  .stat-value {
+    display: block;
+    font-size: var(--text-h2);
+    font-weight: 300;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-label {
+    display: block;
+    font-size: var(--text-body);
+    opacity: 0.7;
+  }
+
+  .week-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 120px;
+    gap: 0.5rem;
+    padding: 0 0.5rem;
+  }
+
+  .day-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .bar {
+    width: 100%;
+    background: var(--color-light);
+    transition: height 0.3s ease;
+    min-height: 2px;
+  }
+
+  .day-label {
+    font-size: var(--text-small);
+    opacity: 0.7;
+  }
+
+  .week-summary {
+    text-align: center;
+    opacity: 0.8;
+  }
+
+  .sessions-list {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .session-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .session-item:last-child {
+    border-bottom: none;
+  }
+
+  .session-type {
+    font-weight: 500;
+  }
+
+  .session-time {
+    opacity: 0.7;
+    font-size: var(--text-small);
+  }
+
+  .export-btn {
+    padding: 0.5rem 2rem;
+    background: var(--color-light);
+    color: var(--color-dark);
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    font-size: var(--text-h6);
+  }
+
+  .export-btn:hover {
+    opacity: 0.8;
+  }
+
+  @media (max-width: 640px) {
+    .dialog-content {
+      padding: 2rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  import type { PomodoroSession, DailyStats } from "../scripts/pomodoro";
+
+  function formatTime(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = Math.round(minutes % 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    }
+    return `${mins}m`;
+  }
+
+  function formatSessionTime(date: Date): string {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) {
+      return `${days} day${days > 1 ? 's' : ''} ago`;
+    } else if (hours > 0) {
+      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    } else {
+      const minutes = Math.floor(diff / (1000 * 60));
+      return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    }
+  }
+
+  function updateStats() {
+    const timer = (window as any).pomodoroTimer;
+    if (!timer) return;
+
+    // Today's stats
+    const todayStats = timer.calculateDailyStats(new Date());
+    const todayFocusTime = document.getElementById('today-focus-time');
+    const todaySessions = document.getElementById('today-sessions');
+    const currentStreak = document.getElementById('current-streak');
+
+    if (todayFocusTime) todayFocusTime.textContent = Math.round(todayStats.totalFocusTime).toString();
+    if (todaySessions) {
+      const totalSessions = todayStats.focusSessions + todayStats.shortBreaks + todayStats.longBreaks;
+      todaySessions.textContent = totalSessions.toString();
+    }
+    if (currentStreak) currentStreak.textContent = timer.getStreakDays().toString();
+
+    // Weekly chart
+    const weekChart = document.getElementById('week-chart');
+    if (weekChart) {
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      
+      weekChart.innerHTML = '';
+      
+      let weekTotalTime = 0;
+      let weekTotalSessions = 0;
+      let maxMinutes = 0;
+
+      // Calculate max for scaling
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const stats = timer.calculateDailyStats(date);
+        maxMinutes = Math.max(maxMinutes, stats.totalFocusTime);
+      }
+
+      // Create bars
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const stats = timer.calculateDailyStats(date);
+        const dayIndex = date.getDay();
+        
+        weekTotalTime += stats.totalFocusTime;
+        weekTotalSessions += stats.focusSessions + stats.shortBreaks + stats.longBreaks;
+
+        const dayBar = document.createElement('div');
+        dayBar.className = 'day-bar';
+
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        const height = maxMinutes > 0 ? (stats.totalFocusTime / maxMinutes) * 100 : 0;
+        bar.style.height = `${height}%`;
+        bar.title = `${formatTime(stats.totalFocusTime)}`;
+
+        const label = document.createElement('span');
+        label.className = 'day-label';
+        label.textContent = days[dayIndex];
+        if (i === 0) label.style.fontWeight = 'bold';
+
+        dayBar.appendChild(bar);
+        dayBar.appendChild(label);
+        weekChart.appendChild(dayBar);
+      }
+
+      // Update week summary
+      const weekTotalTimeEl = document.getElementById('week-total-time');
+      const weekTotalSessionsEl = document.getElementById('week-total-sessions');
+      if (weekTotalTimeEl) weekTotalTimeEl.textContent = Math.round(weekTotalTime).toString();
+      if (weekTotalSessionsEl) weekTotalSessionsEl.textContent = weekTotalSessions.toString();
+    }
+
+    // Recent sessions
+    const recentSessionsEl = document.getElementById('recent-sessions');
+    if (recentSessionsEl) {
+      const sessions = timer.getWeeklySessions();
+      const recentSessions = sessions.slice(-10).reverse(); // Last 10 sessions
+      
+      recentSessionsEl.innerHTML = '';
+      
+      if (recentSessions.length === 0) {
+        recentSessionsEl.innerHTML = '<p class="opacity-70">No sessions yet</p>';
+      } else {
+        recentSessions.forEach((session: PomodoroSession) => {
+          const item = document.createElement('div');
+          item.className = 'session-item';
+          
+          const modeText = session.mode === 'focus' ? 'Focus' : 
+                          session.mode === 'short' ? 'Short Break' : 'Long Break';
+          
+          item.innerHTML = `
+            <div>
+              <span class="session-type">${modeText}</span>
+              <span class="session-time">${formatSessionTime(new Date(session.completedAt))}</span>
+            </div>
+            <span>${session.duration / 60} min</span>
+          `;
+          
+          recentSessionsEl.appendChild(item);
+        });
+      }
+    }
+  }
+
+  function exportStats() {
+    const timer = (window as any).pomodoroTimer;
+    if (!timer) return;
+
+    const sessions = timer.getWeeklySessions();
+    
+    // Create CSV content
+    let csv = 'Date,Time,Type,Duration (minutes)\n';
+    
+    sessions.forEach((session: PomodoroSession) => {
+      const date = new Date(session.completedAt);
+      const dateStr = date.toLocaleDateString();
+      const timeStr = date.toLocaleTimeString();
+      const type = session.mode === 'focus' ? 'Focus' : 
+                  session.mode === 'short' ? 'Short Break' : 'Long Break';
+      const duration = session.duration / 60;
+      
+      csv += `${dateStr},${timeStr},${type},${duration}\n`;
+    });
+
+    // Download CSV
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pomodoro-stats-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Setup event listeners
+  document.addEventListener('DOMContentLoaded', () => {
+    const statsDialog = document.getElementById('stats-dialog');
+    const closeStatsBtn = document.getElementById('close-stats');
+    const exportBtn = document.getElementById('export-stats');
+
+    closeStatsBtn?.addEventListener('click', () => {
+      statsDialog?.classList.remove('open');
+    });
+
+    exportBtn?.addEventListener('click', exportStats);
+
+    // Close on outside click
+    statsDialog?.addEventListener('click', (e) => {
+      if (e.target === statsDialog) {
+        statsDialog.classList.remove('open');
+      }
+    });
+
+    // Update stats when dialog opens
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          if (statsDialog?.classList.contains('open')) {
+            updateStats();
+          }
+        }
+      });
+    });
+
+    if (statsDialog) {
+      observer.observe(statsDialog, { attributes: true });
+    }
+
+    // Also update when session completes
+    window.addEventListener('pomodoroSessionComplete', () => {
+      if (statsDialog?.classList.contains('open')) {
+        updateStats();
+      }
+    });
+  });
+</script>

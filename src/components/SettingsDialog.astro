@@ -110,6 +110,32 @@ const { id = "settings-dialog" } = Astro.props;
       </div>
     </div>
 
+    <!-- Session Settings -->
+    <div class="settings-section mt-8">
+      <h3 class="text-h5 mb-4">Session Settings</h3>
+      <div class="session-settings">
+        <label class="block mb-4">
+          Focus sessions before long break
+          <input
+            type="number"
+            id="focus-sessions-count"
+            class="time-input"
+            value="4"
+            min="1"
+            max="10"
+          />
+        </label>
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            id="auto-start-next"
+            checked
+          />
+          <span>Auto-start next session</span>
+        </label>
+      </div>
+    </div>
+
     <button class="save-btn mt-8" id="save-settings">Save Settings</button>
   </div>
 </div>
@@ -201,5 +227,27 @@ const { id = "settings-dialog" } = Astro.props;
 
   .save-btn:hover {
     opacity: 0.8;
+  }
+
+  .settings-section {
+    padding: 1.5rem;
+    border: 1px solid var(--color-light);
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  .checkbox-label span {
+    font-size: var(--text-body);
   }
 </style>

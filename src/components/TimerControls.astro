@@ -6,11 +6,12 @@ export interface Props {
 const { className = "" } = Astro.props;
 ---
 
-<div class={`grid grid-cols-2 gap-2 md:flex md:gap-4 ${className}`}>
+<div class={`grid grid-cols-2 gap-2 md:grid-cols-5 md:gap-4 ${className}`}>
   <button class="control-btn" id="start-stop-btn"> Start </button>
   <button class="control-btn" id="reset-btn"> Reset </button>
   <button class="control-btn" id="add-5-btn"> +5 min </button>
   <button class="control-btn" id="settings-btn"> Settings </button>
+  <button class="control-btn" id="stats-btn"> Stats </button>
 </div>
 
 <style>
