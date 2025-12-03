@@ -14,28 +14,21 @@ const { currentPage } = Astro.props;
       <span class="zh"> 劉元明 </span>
       <span> JML </span>
     </a>
-    <!-- <a class="nav-button text-h4" href="/projects"> Projects </a>
-    <a class="nav-button text-h4" href="/blog"> Blog </a> -->
+    <a class="nav-button text-h4" href="/blog"> Blog </a>
     <button class="nav-button text-h4 cursor-pointer" id="about-btn-desktop">
       About
     </button>
   </nav>
 
   <!-- Mobile -->
-  <nav class="flex md:hidden px-4 py-2 justify-between h-fit">
-    <a href="/" class="text-h1 font-light tracking-tighter -space-x-2 h-fit">
+  <nav class="flex md:hidden px-4 py-2 justify-between items-start">
+    <a href="/" class="text-h2 font-light tracking-tighter -space-x-2">
       <span class="zh"> 劉元明 </span>
       <span> JML </span>
     </a>
-    <div class="top-0 right-0 flex flex-col mt-2 justify-between w-12 h-fit">
-      <!-- <a class="nav-button text-h5 transform rotate-90" href="/projects">
-        Projects
-      </a>
-      <a class="nav-button text-h5 transform rotate-90" href="/blog"> Blog </a> -->
-      <button
-        class="nav-button text-h5 cursor-pointer transform rotate-90"
-        id="about-btn-mobile"
-      >
+    <div class="flex gap-4 mt-1">
+      <a class="nav-button text-h6" href="/blog">Blog</a>
+      <button class="nav-button text-h6 cursor-pointer" id="about-btn-mobile">
         About
       </button>
     </div>
@@ -199,38 +192,40 @@ const { currentPage } = Astro.props;
 </style>
 
 <script>
-  // Get dialog elements
-  const dialog = document.getElementById("about-dialog");
-  const aboutBtnDesktop = document.getElementById("about-btn-desktop");
-  const aboutBtnMobile = document.getElementById("about-btn-mobile");
-  const closeBtn = document.getElementById("close-about");
+  function initAboutDialog() {
+    const dialog = document.getElementById("about-dialog");
+    const aboutBtnDesktop = document.getElementById("about-btn-desktop");
+    const aboutBtnMobile = document.getElementById("about-btn-mobile");
+    const closeBtn = document.getElementById("close-about");
 
-  // Function to open dialog
-  function openDialog() {
-    dialog?.classList.add("open");
+    function openDialog() {
+      dialog?.classList.add("open");
+    }
+
+    function closeDialog() {
+      dialog?.classList.remove("open");
+    }
+
+    aboutBtnDesktop?.addEventListener("click", openDialog);
+    aboutBtnMobile?.addEventListener("click", openDialog);
+    closeBtn?.addEventListener("click", closeDialog);
+
+    dialog?.addEventListener("click", (e) => {
+      if (e.target === dialog) {
+        closeDialog();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && dialog?.classList.contains("open")) {
+        closeDialog();
+      }
+    });
   }
 
-  // Function to close dialog
-  function closeDialog() {
-    dialog?.classList.remove("open");
-  }
+  // Run on initial load
+  initAboutDialog();
 
-  // Event listeners
-  aboutBtnDesktop?.addEventListener("click", openDialog);
-  aboutBtnMobile?.addEventListener("click", openDialog);
-  closeBtn?.addEventListener("click", closeDialog);
-
-  // Close dialog when clicking outside content
-  dialog?.addEventListener("click", (e) => {
-    if (e.target === dialog) {
-      closeDialog();
-    }
-  });
-
-  // Close dialog with Escape key
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && dialog?.classList.contains("open")) {
-      closeDialog();
-    }
-  });
+  // Re-run after view transitions
+  document.addEventListener("astro:page-load", initAboutDialog);
 </script>
