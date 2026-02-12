@@ -2,6 +2,9 @@
 
 :root {
   --font-pp-editorial: "PP Editorial New", Georgia, serif;
+  --font-pp-editorial-sans:
+    "PP Nikkei Journal", "Avenir Next", "Helvetica Neue", "Segoe UI",
+    "Noto Sans", sans-serif;
   --font-noto-serif-jp: "Noto Serif JP", serif;
   --font-mixed: "PP Editorial New", "Noto Serif JP", Georgia, serif;
 }

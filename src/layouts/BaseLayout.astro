@@ -1,4 +1,5 @@
 ---
+import AboutOverlay from "../components/AboutOverlay.astro";
 import "../styles/fonts.css";
 import "../styles/global.css";
 
@@ -15,8 +16,10 @@ const { title = "Joshua Motoaki Lau" } = Astro.props;
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    <slot name="head" />
   </head>
   <body class="bg-light text-dark font-serif">
     <slot />
+    <AboutOverlay />
   </body>
 </html>
