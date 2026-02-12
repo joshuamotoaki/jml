@@ -89,8 +89,10 @@
   cursor: pointer;
 }
 
-.blog-kicker:hover,
-.blog-kicker:focus-visible,
+a.blog-kicker:hover,
+a.blog-kicker:focus-visible,
+button.blog-kicker:hover,
+button.blog-kicker:focus-visible,
 .post-backlink:hover,
 .post-backlink:focus-visible {
   text-decoration: underline;
