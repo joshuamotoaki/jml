@@ -7,7 +7,7 @@ tags:
   - engineering
   - systems
 permalink: welcome-to-the-blog
-draft: false
+draft: true
 ---
 
 This blog is where I publish notes about building software with clarity and intent. It's a space for me to share practical engineering insights, reflect on product and infrastructure tradeoffs, and document field notes from current projects.
