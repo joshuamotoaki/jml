@@ -31,6 +31,15 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "long",
   timeZone: "UTC",
 });
+const tagPalette = ["#e63946", "#f4845f", "#06d6a0", "#118ab2"];
+const getTagColor = (tag: string) => {
+  let hash = 0;
+  const normalized = tag.trim().toLowerCase();
+  for (const char of normalized) {
+    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  }
+  return tagPalette[hash % tagPalette.length];
+};
 const shareLinks = {
   x: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
 };
@@ -93,7 +102,11 @@ const shareLinks = {
           }
         </p>
         <div class="blog-tags" aria-label="Tags">
-          {post.data.tags.map((tag) => <span class="blog-tag">{tag}</span>)}
+          {post.data.tags.map((tag) => (
+            <span class="blog-tag" style={`--blog-tag-color: ${getTagColor(tag)}`}>
+              {tag}
+            </span>
+          ))}
         </div>
         <div class="post-share" aria-label="Share this post">
           <span class="post-share-label">Share</span>
