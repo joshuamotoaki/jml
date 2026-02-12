@@ -1,0 +1,495 @@
+.blog-shell {
+  --blog-bg: #ffffff;
+  --blog-ink: #101010;
+  --blog-ink-soft: #232323;
+  --blog-muted: #595959;
+  --blog-rule: rgba(16, 16, 16, 0.24);
+  --blog-rule-soft: rgba(16, 16, 16, 0.14);
+  --blog-rule-faint: rgba(16, 16, 16, 0.08);
+
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  color: var(--blog-ink);
+  background: var(--blog-bg);
+  font-family: "Noto Serif JP", Georgia, "Times New Roman", serif;
+  font-feature-settings:
+    "liga" 1,
+    "kern" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.blog-noise-svg {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.blog-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: rgba(0, 0, 0, 0.1);
+  filter: url(#blogPageNoise);
+  opacity: 0.33;
+}
+
+.blog-shell,
+.blog-shell * {
+  animation: none !important;
+  transition: none !important;
+  view-transition-name: none !important;
+  scroll-behavior: auto !important;
+}
+
+.blog-page,
+.post-page {
+  position: relative;
+  z-index: 1;
+  width: min(94vw, 82rem);
+  margin: 0 auto;
+  padding: 4.65rem 0 4.35rem;
+}
+
+.blog-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  border-bottom: 1px solid var(--blog-rule);
+  padding-bottom: 0.8rem;
+}
+
+.blog-nav-links {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.blog-kicker,
+.post-backlink {
+  color: var(--blog-muted);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.145em;
+  font-size: 0.6rem;
+  line-height: 1.68;
+  font-family: "PP Editorial New", Georgia, "Times New Roman", serif;
+  font-weight: 400;
+}
+
+.blog-kicker:hover,
+.blog-kicker:focus-visible,
+.post-backlink:hover,
+.post-backlink:focus-visible {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.13em;
+}
+
+.blog-masthead {
+  margin-top: 2.15rem;
+  padding-bottom: 2.9rem;
+  border-bottom: 1px solid var(--blog-rule-soft);
+}
+
+.blog-title {
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  font-family: "PP Editorial New", Georgia, "Times New Roman", serif;
+  font-size: clamp(2.9rem, 8.2vw, 7.2rem);
+  line-height: 0.88;
+  letter-spacing: -0.02em;
+  font-weight: 200;
+  text-wrap: pretty;
+}
+
+.blog-intro {
+  margin: 1.5rem 0 0;
+  max-width: 38ch;
+  color: var(--blog-ink-soft);
+  font-family: "PP Editorial New", Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: clamp(1.12rem, 1.8vw, 1.56rem);
+  line-height: 1.44;
+}
+
+.blog-list {
+  list-style: none;
+  margin: 2.7rem 0 0;
+  padding: 0;
+  counter-reset: postcount;
+}
+
+.blog-card {
+  counter-increment: postcount;
+  border-top: 1px solid var(--blog-rule-faint);
+  padding: 1.95rem 0 2.2rem;
+}
+
+.blog-card:last-child {
+  border-bottom: 1px solid var(--blog-rule-faint);
+}
+
+.blog-card-meta {
+  margin: 0;
+  color: var(--blog-muted);
+  font-size: 0.58rem;
+  line-height: 1.95;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-family: "PP Editorial New", Georgia, "Times New Roman", serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.blog-card-meta::before {
+  content: counter(postcount, decimal-leading-zero) " ";
+  color: var(--blog-ink);
+  font-weight: 400;
+}
+
+.blog-card-main {
+  min-width: 0;
+}
+
+.blog-card-title {
+  margin: 0.52rem 0 0;
+  width: 100%;
+  max-width: none;
+  font-family: "PP Editorial New", Georgia, "Times New Roman", serif;
+  font-size: clamp(1.95rem, 4vw, 3.8rem);
+  line-height: 0.9;
+  letter-spacing: -0.018em;
+  font-weight: 200;
+  text-wrap: pretty;
+}
+
+.blog-card-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.blog-card-title a:hover,
+.blog-card-title a:focus-visible {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.11em;
+}
+
+.blog-card-desc {
+  margin: 0.9rem 0 0;
+  max-width: 66ch;
+  color: var(--blog-ink-soft);
+  font-size: clamp(1.02rem, 1.22vw, 1.15rem);
+  line-height: 1.75;
+}
+
+.blog-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.34rem 0.42rem;
+  margin-top: 1.04rem;
+}
+
+.blog-tag {
+  color: var(--blog-muted);
+  border: 1px solid var(--blog-rule-soft);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.12rem 0.54rem;
+  font-size: 0.54rem;
+  line-height: 1.52;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: "PP Editorial New", Georgia, "Times New Roman", serif;
+}
+
+.blog-empty {
+  margin-top: 2.6rem;
+  max-width: 46ch;
+  color: var(--blog-muted);
+  border-top: 1px solid var(--blog-rule-soft);
+  padding-top: 1.05rem;
+}
+
+.post-header {
+  margin-top: 2.15rem;
+  border-bottom: 1px solid var(--blog-rule);
+  padding-bottom: 2.28rem;
+}
+
+.post-title {
+  margin: 0.95rem 0 0;
+  width: 100%;
+  max-width: none;
+  font-family: "PP Editorial New", Georgia, "Times New Roman", serif;
+  font-size: clamp(3rem, 8.4vw, 7.4rem);
+  line-height: 0.86;
+  letter-spacing: -0.024em;
+  font-weight: 200;
+  text-wrap: pretty;
+}
+
+.post-dek {
+  margin: 1.24rem 0 0;
+  max-width: 34ch;
+  color: var(--blog-ink-soft);
+  font-family: "PP Editorial New", Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: clamp(1.22rem, 2.15vw, 1.88rem);
+  line-height: 1.33;
+}
+
+.post-meta {
+  margin: 1.24rem 0 0;
+  color: var(--blog-muted);
+  font-size: 0.58rem;
+  line-height: 1.95;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-family: "PP Editorial New", Georgia, "Times New Roman", serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.post-header .blog-tags {
+  margin-top: 0.98rem;
+}
+
+.post-content {
+  margin-top: 3.2rem;
+  max-width: 69ch;
+  color: #161616;
+  font-family:
+    "Avenir Next", "Helvetica Neue", "Segoe UI", "Noto Sans", sans-serif;
+  font-size: clamp(0.99rem, 1.02vw, 1.08rem);
+  line-height: 1.72;
+}
+
+.post-content > * + * {
+  margin-top: 1.08em;
+}
+
+.post-content p {
+  text-wrap: pretty;
+}
+
+.post-content > p:first-of-type {
+  margin-top: 0;
+  max-width: 65ch;
+  font-family:
+    "Avenir Next", "Helvetica Neue", "Segoe UI", "Noto Sans", sans-serif;
+  font-size: inherit;
+  line-height: inherit;
+  font-style: normal;
+  color: inherit;
+}
+
+.post-content h2,
+.post-content h3,
+.post-content h4 {
+  margin-bottom: 0.22em;
+  line-height: 1.03;
+  text-wrap: balance;
+  font-family: "PP Editorial New", Georgia, "Times New Roman", serif;
+}
+
+.post-content h2 {
+  margin-top: 2.2em;
+  font-size: clamp(1.8rem, 2.7vw, 2.5rem);
+  letter-spacing: -0.018em;
+  font-weight: 400;
+}
+
+.post-content h3 {
+  margin-top: 1.9em;
+  font-size: clamp(1.45rem, 2.2vw, 1.9rem);
+  letter-spacing: -0.01em;
+  font-weight: 400;
+}
+
+.post-content h4 {
+  margin-top: 1.72em;
+  font-size: clamp(1.2rem, 1.7vw, 1.4rem);
+  font-weight: 400;
+}
+
+.post-content a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.14em;
+  text-decoration-color: rgba(17, 17, 17, 0.45);
+}
+
+.post-content ul,
+.post-content ol {
+  padding-left: 1.3em;
+}
+
+.post-content li + li {
+  margin-top: 0.38em;
+}
+
+.post-content blockquote {
+  margin: 1.8em 0;
+  border-left: 3px solid var(--blog-rule-soft);
+  padding-left: 1.04rem;
+  color: var(--blog-ink-soft);
+  font-family:
+    "Avenir Next", "Helvetica Neue", "Segoe UI", "Noto Sans", sans-serif;
+  font-style: normal;
+}
+
+.post-content hr {
+  border: 0;
+  border-top: 1px solid var(--blog-rule-soft);
+  margin: 2.5em 0;
+}
+
+.post-content code {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 0.83em;
+  background: rgba(0, 0, 0, 0.055);
+  padding: 0.12em 0.35em;
+}
+
+.post-content pre {
+  background: #fafafa;
+  border: 1px solid var(--blog-rule-faint);
+  padding: 1.04rem 1.1rem;
+  overflow-x: auto;
+}
+
+.post-content pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.post-content img {
+  width: 100%;
+  height: auto;
+}
+
+.post-content table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.post-content th,
+.post-content td {
+  border-bottom: 1px solid var(--blog-rule-faint);
+  padding: 0.46rem 0.36rem;
+  text-align: left;
+}
+
+@media (min-width: 64rem) {
+  .blog-masthead {
+    display: grid;
+    grid-template-columns: minmax(0, 1.72fr) minmax(19rem, 1fr);
+    gap: 1.2rem 3.35rem;
+    align-items: end;
+  }
+
+  .blog-masthead .blog-kicker {
+    grid-column: 1 / -1;
+  }
+
+  .blog-title {
+    grid-column: 1 / -1;
+  }
+
+  .blog-intro {
+    grid-column: 1 / -1;
+    max-width: 56ch;
+    margin: 0.56rem 0 0;
+  }
+
+  .blog-card {
+    display: grid;
+    grid-template-columns: minmax(8.8rem, 10rem) minmax(0, 1fr);
+    column-gap: 2.35rem;
+    align-items: start;
+  }
+
+  .post-page {
+    width: min(94vw, 89rem);
+  }
+
+  .post-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1.95fr) minmax(14rem, 1fr);
+    column-gap: 2.9rem;
+    align-items: end;
+  }
+
+  .post-backlink,
+  .post-title,
+  .post-dek {
+    grid-column: 1 / 2;
+  }
+
+  .post-meta,
+  .post-header .blog-tags {
+    grid-column: 2 / 3;
+    justify-self: start;
+  }
+
+  .post-meta {
+    margin-top: 0.58rem;
+  }
+
+  .post-header .blog-tags {
+    margin-top: 0.82rem;
+  }
+
+  .post-content {
+    margin-left: 1.5rem;
+  }
+}
+
+@media (max-width: 52rem) {
+  .blog-page,
+  .post-page {
+    width: min(92vw, 43rem);
+    padding-top: 4.2rem;
+    padding-bottom: 4rem;
+  }
+
+  .blog-title,
+  .blog-card-title,
+  .post-title {
+    max-width: 100%;
+  }
+
+  .blog-title {
+    line-height: 0.9;
+  }
+
+  .blog-card-title {
+    line-height: 0.93;
+  }
+
+  .post-title {
+    line-height: 0.88;
+  }
+
+  .blog-card-meta::before {
+    margin-right: 0.34rem;
+  }
+
+  .post-content {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .post-content > p:first-of-type {
+    max-width: 100%;
+    font-size: inherit;
+    line-height: inherit;
+  }
+}

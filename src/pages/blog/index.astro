@@ -1,0 +1,99 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import "../../styles/blog.css";
+
+const includeDrafts = !import.meta.env.PROD;
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "long",
+  timeZone: "UTC",
+});
+
+const posts = (await getCollection("blog"))
+  .filter((post) => includeDrafts || !post.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<BaseLayout title="Blog | Joshua Motoaki Lau">
+  <Fragment slot="head">
+    <meta
+      name="description"
+      content="Long-form writing from Joshua Motoaki Lau on software, systems, and craft."
+    />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="JML Blog RSS"
+      href="/rss.xml"
+    />
+  </Fragment>
+
+  <div class="blog-shell">
+    <svg class="blog-noise-svg" aria-hidden="true">
+      <defs>
+        <filter id="blogPageNoise">
+          <feTurbulence
+            baseFrequency="0.3"
+            numOctaves="3"
+            stitchTiles="noStitch"></feTurbulence>
+          <feColorMatrix type="saturate" values="0"></feColorMatrix>
+        </filter>
+      </defs>
+    </svg>
+
+    <main class="blog-page">
+      <nav class="blog-nav" aria-label="Blog navigation">
+        <a href="/" class="blog-kicker">Joshua Motoaki Lau</a>
+        <div class="blog-nav-links">
+          <a href="/" class="blog-kicker">About</a>
+          <a href="/rss.xml" class="blog-kicker">RSS</a>
+        </div>
+      </nav>
+
+      <header class="blog-masthead">
+        <p class="blog-kicker">Field Notes</p>
+        <h1 class="blog-title">Systems & Style</h1>
+      </header>
+
+      {
+        posts.length === 0 ? (
+          <p class="blog-empty">No published posts yet. Check back soon.</p>
+        ) : (
+          <ul class="blog-list">
+            {posts.map((post) => (
+              <li class="blog-card">
+                <p class="blog-card-meta">
+                  <time datetime={post.data.pubDate.toISOString()}>
+                    {dateFormatter.format(post.data.pubDate)}
+                  </time>
+                  {post.data.updatedDate && (
+                    <span>
+                      {" "}
+                      · Updated{" "}
+                      <time datetime={post.data.updatedDate.toISOString()}>
+                        {dateFormatter.format(post.data.updatedDate)}
+                      </time>
+                    </span>
+                  )}
+                </p>
+                <div class="blog-card-main">
+                  <h2 class="blog-card-title">
+                    <a href={`/blog/${post.data.permalink}/`}>
+                      {post.data.title}
+                    </a>
+                  </h2>
+                  <p class="blog-card-desc">{post.data.description}</p>
+                  <div class="blog-tags" aria-label="Tags">
+                    {post.data.tags.map((tag) => (
+                      <span class="blog-tag">{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </main>
+  </div>
+</BaseLayout>

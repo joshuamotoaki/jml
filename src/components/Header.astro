@@ -4,7 +4,7 @@ export interface Props {
   currentPage?: string;
 }
 
-const { currentPage } = Astro.props;
+const { currentPage: _currentPage } = Astro.props;
 ---
 
 <header class="absolute top-0 left-0 w-full z-50">
@@ -14,11 +14,10 @@ const { currentPage } = Astro.props;
       <span class="zh"> 劉元明 </span>
       <span> JML </span>
     </a>
-    <!-- <a class="nav-button text-h4" href="/projects"> Projects </a>
-    <a class="nav-button text-h4" href="/blog"> Blog </a> -->
-    <button class="nav-button text-h4 cursor-pointer" id="about-btn-desktop">
-      About
-    </button>
+    <div class="flex items-center gap-5">
+      <a class="nav-button text-h4" href="/blog/">Blog</a>
+      <a class="nav-button text-h4" href="/">About</a>
+    </div>
   </nav>
 
   <!-- Mobile -->
@@ -28,212 +27,8 @@ const { currentPage } = Astro.props;
       <span> JML </span>
     </a>
     <div class="top-0 right-0 flex flex-col mt-2 justify-between w-12 h-fit">
-      <!-- <a class="nav-button text-h5 transform rotate-90" href="/projects">
-        Projects
-      </a>
-      <a class="nav-button text-h5 transform rotate-90" href="/blog"> Blog </a> -->
-      <button
-        class="nav-button text-h5 cursor-pointer transform rotate-90"
-        id="about-btn-mobile"
-      >
-        About
-      </button>
+      <a class="nav-button text-h5 transform rotate-90" href="/blog/">Blog</a>
+      <a class="nav-button text-h5 transform rotate-90" href="/">About</a>
     </div>
   </nav>
 </header>
-
-<!-- About Dialog -->
-<div id="about-dialog" class="about-dialog text-light">
-  <!-- SVG Filter for Noise -->
-  <svg style="position: absolute; width: 0; height: 0;">
-    <defs>
-      <filter id="dialogNoise">
-        <feTurbulence baseFrequency="0.4" numOctaves="4" stitchTiles="noStitch"
-        ></feTurbulence>
-        <feColorMatrix type="saturate" values="128"></feColorMatrix>
-      </filter>
-    </defs>
-  </svg>
-
-  <div class="w-full h-full">
-    <button class="about-close-btn" id="close-about">
-      <svg
-        width="32"
-        height="32"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-      >
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-
-    <div class="about-content">
-      <h2 class="text-h3 sm:text-huge mb-4">Joshua Motoaki Lau</h2>
-
-      <div class="sm:text-h5 md:text-h4 space-y-4 w-full">
-        <p>
-          I'm the founder & CEO of <a
-            class="hover:text-light-hover duration-100 underline"
-            href="https://kizaki.ai"
-            target="_blank"
-            rel="noopener noreferrer">Kizaki</a
-          >, an early-stage startup building a fully reshapable workspace.
-        </p>
-        <p>
-          I'm also a 4th-year Electrical & Computer Engineering undergraduate at
-          Princeton University.
-        </p>
-        <p>
-          As chief software engineer of
-          <a
-            class="hover:text-light-hover duration-100 underline"
-            href="https://tigerapps.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            TigerApps</a
-          >, I mentor a 41-member team in developing apps serving the Princeton
-          community. My research with the
-          <a
-            class="hover:text-light-hover duration-100 underline"
-            href="https://netsyn.princeton.edu/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            NetSyn Lab</a
-          > focuses on computer networks and AI. You'll also find me figure skating
-          or playing taiko drums.
-        </p>
-        <p>
-          <span class="zh"> 劉元明 </span> is my Cantonese last name (Lau) and my
-          Japanese middle name (Motoaki).
-        </p>
-      </div>
-
-      <div class="absolute bottom-0 right-0 sm:text-h5 md:text-h4 text-right">
-        <div class="flex flex-wrap gap-4 justify-end">
-          <a
-            href="https://github.com/joshuamotoaki"
-            target="_blank"
-            class="hover:text-light-hover duration-100 underline"
-          >
-            GitHub
-          </a>
-          <a
-            href="https://www.linkedin.com/in/joshua-lau26/"
-            target="_blank"
-            class="hover:text-light-hover duration-100 underline"
-          >
-            LinkedIn
-          </a>
-        </div>
-        <p>joshua@kizaki.ai</p>
-        <p class="font-light italic">Camarillo, California</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<style>
-  .about-dialog {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 70, 150, 0.8);
-    backdrop-filter: blur(12px);
-    z-index: 1000;
-    opacity: 0;
-    padding: 1rem;
-    visibility: hidden;
-    transition:
-      opacity 0.2s ease,
-      visibility 0.2s ease;
-  }
-
-  .about-dialog.open {
-    opacity: 1;
-    visibility: visible;
-  }
-
-  .about-dialog::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    filter: url(#dialogNoise);
-    opacity: 0.15;
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  .about-dialog.open .about-dialog-content {
-    transform: translateY(0);
-  }
-
-  .about-content {
-    position: relative;
-    width: 100%;
-    height: 100%;
-  }
-
-  .about-close-btn {
-    position: absolute;
-    top: 0;
-    right: 0;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 1rem;
-    border-radius: 50%;
-    transition-duration: var(--duration-std);
-    z-index: 3;
-  }
-
-  .about-close-btn:hover {
-    color: var(--color-light-hover);
-  }
-</style>
-
-<script>
-  // Get dialog elements
-  const dialog = document.getElementById("about-dialog");
-  const aboutBtnDesktop = document.getElementById("about-btn-desktop");
-  const aboutBtnMobile = document.getElementById("about-btn-mobile");
-  const closeBtn = document.getElementById("close-about");
-
-  // Function to open dialog
-  function openDialog() {
-    dialog?.classList.add("open");
-  }
-
-  // Function to close dialog
-  function closeDialog() {
-    dialog?.classList.remove("open");
-  }
-
-  // Event listeners
-  aboutBtnDesktop?.addEventListener("click", openDialog);
-  aboutBtnMobile?.addEventListener("click", openDialog);
-  closeBtn?.addEventListener("click", closeDialog);
-
-  // Close dialog when clicking outside content
-  dialog?.addEventListener("click", (e) => {
-    if (e.target === dialog) {
-      closeDialog();
-    }
-  });
-
-  // Close dialog with Escape key
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && dialog?.classList.contains("open")) {
-      closeDialog();
-    }
-  });
-</script>

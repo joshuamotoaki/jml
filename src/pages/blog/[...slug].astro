@@ -1,0 +1,96 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import "../../styles/blog.css";
+
+interface Props {
+  post: CollectionEntry<"blog">;
+}
+
+export async function getStaticPaths() {
+  const includeDrafts = !import.meta.env.PROD;
+  const posts = await getCollection("blog");
+  const visiblePosts = posts.filter(
+    (post) => includeDrafts || !post.data.draft
+  );
+
+  return visiblePosts.map((post) => ({
+    params: { slug: post.data.permalink },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props as Props;
+const { Content } = await post.render();
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "long",
+  timeZone: "UTC",
+});
+---
+
+<BaseLayout title={`${post.data.title} | Blog | Joshua Motoaki Lau`}>
+  <Fragment slot="head">
+    <meta name="description" content={post.data.description} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="JML Blog RSS"
+      href="/rss.xml"
+    />
+  </Fragment>
+
+  <div class="blog-shell">
+    <svg class="blog-noise-svg" aria-hidden="true">
+      <defs>
+        <filter id="blogPageNoise">
+          <feTurbulence
+            baseFrequency="0.3"
+            numOctaves="3"
+            stitchTiles="noStitch"
+          />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+      </defs>
+    </svg>
+
+    <article class="post-page">
+      <nav class="blog-nav" aria-label="Post navigation">
+        <a href="/" class="blog-kicker">Joshua Motoaki Lau</a>
+        <div class="blog-nav-links">
+          <a href="/" class="blog-kicker">About</a>
+          <a href="/rss.xml" class="blog-kicker">RSS</a>
+        </div>
+      </nav>
+
+      <header class="post-header">
+        <a href="/blog/" class="post-backlink">Back to blog</a>
+        <h1 class="post-title">{post.data.title}</h1>
+        <p class="post-dek">{post.data.description}</p>
+        <p class="post-meta">
+          <time datetime={post.data.pubDate.toISOString()}
+            >{dateFormatter.format(post.data.pubDate)}</time
+          >
+          {
+            post.data.updatedDate && (
+              <span>
+                {" "}
+                · Updated{" "}
+                <time datetime={post.data.updatedDate.toISOString()}>
+                  {dateFormatter.format(post.data.updatedDate)}
+                </time>
+              </span>
+            )
+          }
+        </p>
+        <div class="blog-tags" aria-label="Tags">
+          {post.data.tags.map((tag) => <span class="blog-tag">{tag}</span>)}
+        </div>
+      </header>
+
+      <div class="post-content">
+        <Content />
+      </div>
+    </article>
+  </div>
+</BaseLayout>
