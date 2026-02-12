@@ -365,8 +365,8 @@ button.blog-kicker:focus-visible,
   margin: 3.2rem auto 0;
   max-width: 78ch;
   color: #161616;
-  font-family:
-    "Avenir Next", "Helvetica Neue", "Segoe UI", "Noto Sans", sans-serif;
+  font-family: var(--font-pp-editorial-sans);
+  font-weight: 300;
   font-size: clamp(0.99rem, 1.02vw, 1.08rem);
   line-height: 1.72;
 }
@@ -382,8 +382,7 @@ button.blog-kicker:focus-visible,
 .post-content > p:first-of-type {
   margin-top: 0;
   max-width: 74ch;
-  font-family:
-    "Avenir Next", "Helvetica Neue", "Segoe UI", "Noto Sans", sans-serif;
+  font-family: var(--font-pp-editorial-sans);
   font-size: inherit;
   line-height: inherit;
   font-style: normal;
@@ -450,8 +449,7 @@ button.blog-kicker:focus-visible,
   border-left: 3px solid var(--blog-rule-soft);
   padding-left: 1.04rem;
   color: var(--blog-ink-soft);
-  font-family:
-    "Avenir Next", "Helvetica Neue", "Segoe UI", "Noto Sans", sans-serif;
+  font-family: var(--font-pp-editorial-sans);
   font-style: normal;
 }
 
@@ -465,6 +463,7 @@ button.blog-kicker:focus-visible,
   font-family:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
+  font-weight: 400;
   font-size: 0.83em;
   background: rgba(0, 0, 0, 0.055);
   padding: 0.12em 0.35em;

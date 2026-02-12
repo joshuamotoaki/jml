@@ -53,3 +53,51 @@
   font-style: normal;
   font-display: swap;
 }
+
+@font-face {
+  font-family: "PP Nikkei Journal";
+  src: url("/fonts/PPNikkeiJournal-Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Nikkei Journal";
+  src: url("/fonts/PPNikkeiJournal-LightItalic.otf") format("opentype");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Nikkei Journal";
+  src: url("/fonts/PPNikkeiJournal-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Nikkei Journal";
+  src: url("/fonts/PPNikkeiJournal-RegularItalic.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Nikkei Journal";
+  src: url("/fonts/PPNikkeiJournal-Ultrabold.otf") format("opentype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Nikkei Journal";
+  src: url("/fonts/PPNikkeiJournal-UltraboldItalic.otf") format("opentype");
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
