@@ -268,9 +268,59 @@ button.blog-kicker:focus-visible,
   margin-top: 0.98rem;
 }
 
+.post-share {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.52rem 0.8rem;
+  align-items: center;
+}
+
+.post-share-label {
+  color: var(--blog-muted);
+  font-size: 0.56rem;
+  line-height: 1.7;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  font-family: "PP Editorial New", Georgia, "Times New Roman", serif;
+}
+
+.post-share-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.post-share-link,
+.post-share-button {
+  color: var(--blog-ink-soft);
+  border: 1px solid var(--blog-rule-soft);
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0.12rem 0.54rem;
+  font-size: 0.54rem;
+  line-height: 1.55;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: "PP Editorial New", Georgia, "Times New Roman", serif;
+  text-decoration: none;
+}
+
+.post-share-button {
+  cursor: pointer;
+}
+
+.post-share-link:hover,
+.post-share-link:focus-visible,
+.post-share-button:hover,
+.post-share-button:focus-visible {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.12em;
+}
+
 .post-content {
-  margin-top: 3.2rem;
-  max-width: 69ch;
+  margin: 3.2rem auto 0;
+  max-width: 78ch;
   color: #161616;
   font-family:
     "Avenir Next", "Helvetica Neue", "Segoe UI", "Noto Sans", sans-serif;
@@ -288,7 +338,7 @@ button.blog-kicker:focus-visible,
 
 .post-content > p:first-of-type {
   margin-top: 0;
-  max-width: 65ch;
+  max-width: 74ch;
   font-family:
     "Avenir Next", "Helvetica Neue", "Segoe UI", "Noto Sans", sans-serif;
   font-size: inherit;
@@ -396,6 +446,35 @@ button.blog-kicker:focus-visible,
   text-align: left;
 }
 
+.post-footer {
+  margin: 3.2rem auto 0;
+  max-width: 78ch;
+  border-top: 1px solid var(--blog-rule-soft);
+  padding-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.post-footer-button {
+  color: var(--blog-ink);
+  text-decoration: none;
+  border: 1px solid var(--blog-rule-soft);
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0.4rem 0.86rem;
+  font-size: 0.6rem;
+  line-height: 1.6;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-family: "PP Editorial New", Georgia, "Times New Roman", serif;
+}
+
+.post-footer-button:hover,
+.post-footer-button:focus-visible {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.12em;
+}
+
 @media (min-width: 64rem) {
   .blog-masthead {
     display: grid;
@@ -443,7 +522,8 @@ button.blog-kicker:focus-visible,
   }
 
   .post-meta,
-  .post-header .blog-tags {
+  .post-header .blog-tags,
+  .post-share {
     grid-column: 2 / 3;
     justify-self: start;
   }
@@ -456,8 +536,9 @@ button.blog-kicker:focus-visible,
     margin-top: 0.82rem;
   }
 
-  .post-content {
-    margin-left: 1.5rem;
+  .post-content,
+  .post-footer {
+    max-width: 82ch;
   }
 }
 
@@ -500,5 +581,9 @@ button.blog-kicker:focus-visible,
     max-width: 100%;
     font-size: inherit;
     line-height: inherit;
+  }
+
+  .post-footer-button {
+    font-size: 0.58rem;
   }
 }

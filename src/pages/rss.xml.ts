@@ -9,8 +9,9 @@ export const GET: APIRoute = async (context) => {
     .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
   return rss({
-    title: "Joshua Motoaki Lau — Blog",
-    description: "Writing on software, systems, and engineering craft.",
+    title: "Joshua Motoaki Lau — Systems & Style Blog",
+    description:
+      "Writing about systems and style, both technical and human and the intersection of the two.",
     site: context.site ?? "https://motoaki.dev",
     customData: "<language>en-us</language>",
     xmlns: {

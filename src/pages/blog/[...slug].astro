@@ -23,10 +23,17 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props as Props;
 const { Content } = await post.render();
+const siteUrl = Astro.site ?? new URL("https://motoaki.dev");
+const canonicalUrl = new URL(`/blog/${post.data.permalink}/`, siteUrl);
+const encodedUrl = encodeURIComponent(canonicalUrl.toString());
+const encodedTitle = encodeURIComponent(post.data.title);
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "long",
   timeZone: "UTC",
 });
+const shareLinks = {
+  x: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
+};
 ---
 
 <BaseLayout title={`${post.data.title} | Blog | Joshua Motoaki Lau`}>
@@ -88,11 +95,57 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
         <div class="blog-tags" aria-label="Tags">
           {post.data.tags.map((tag) => <span class="blog-tag">{tag}</span>)}
         </div>
+        <div class="post-share" aria-label="Share this post">
+          <span class="post-share-label">Share</span>
+          <div class="post-share-links">
+            <button
+              class="post-share-button"
+              type="button"
+              data-copy-url={canonicalUrl.toString()}
+            >
+              Copy link
+            </button>
+            <a
+              class="post-share-link"
+              href={shareLinks.x}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              X
+            </a>
+          </div>
+        </div>
       </header>
 
       <div class="post-content">
         <Content />
       </div>
+
+      <footer class="post-footer" aria-label="Post footer">
+        <a class="post-footer-button" href="/blog/">Back to blog list</a>
+      </footer>
     </article>
   </div>
 </BaseLayout>
+
+<script is:inline>
+  const copyButtons = document.querySelectorAll("[data-copy-url]");
+  copyButtons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      const url = button.getAttribute("data-copy-url");
+      if (!url) return;
+      const originalLabel = button.textContent || "Copy link";
+
+      try {
+        await navigator.clipboard.writeText(url);
+        button.textContent = "Copied";
+      } catch {
+        window.prompt("Copy this link:", url);
+      }
+
+      window.setTimeout(() => {
+        button.textContent = originalLabel;
+      }, 1500);
+    });
+  });
+</script>
