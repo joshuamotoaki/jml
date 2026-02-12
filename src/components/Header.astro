@@ -14,7 +14,13 @@ export interface Props {
     </a>
     <div class="flex items-center gap-5">
       <a class="nav-button text-h4" href="/blog/">Blog</a>
-      <a class="nav-button text-h4" href="/">About</a>
+      <button
+        class="nav-button text-h4 cursor-pointer border-0 bg-transparent p-0"
+        data-about-trigger
+        type="button"
+      >
+        About
+      </button>
     </div>
   </nav>
 
@@ -26,7 +32,13 @@ export interface Props {
     </a>
     <div class="top-0 right-0 flex flex-col mt-2 justify-between w-12 h-fit">
       <a class="nav-button text-h5 transform rotate-90" href="/blog/">Blog</a>
-      <a class="nav-button text-h5 transform rotate-90" href="/">About</a>
+      <button
+        class="nav-button text-h5 cursor-pointer transform rotate-90 border-0 bg-transparent p-0"
+        data-about-trigger
+        type="button"
+      >
+        About
+      </button>
     </div>
   </nav>
 </header>

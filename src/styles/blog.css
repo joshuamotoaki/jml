@@ -82,6 +82,13 @@
   font-weight: 400;
 }
 
+.blog-kicker-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
 .blog-kicker:hover,
 .blog-kicker:focus-visible,
 .post-backlink:hover,

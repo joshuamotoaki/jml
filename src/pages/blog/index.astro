@@ -43,9 +43,11 @@ const posts = (await getCollection("blog"))
 
     <main class="blog-page">
       <nav class="blog-nav" aria-label="Blog navigation">
-        <a href="/" class="blog-kicker">Joshua Motoaki Lau</a>
+        <a href="/" class="blog-kicker"><span class="zh">劉元明</span> Joshua Motoaki Lau</a>
         <div class="blog-nav-links">
-          <a href="/" class="blog-kicker">About</a>
+          <button class="blog-kicker blog-kicker-button" data-about-trigger type="button">
+            About
+          </button>
           <a href="/rss.xml" class="blog-kicker">RSS</a>
         </div>
       </nav>
