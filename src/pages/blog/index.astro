@@ -42,7 +42,7 @@ const posts = (await getCollection("blog"))
       <defs>
         <filter id="blogPageNoise">
           <feTurbulence
-            baseFrequency="0.3"
+            baseFrequency="0.4"
             numOctaves="3"
             stitchTiles="noStitch"></feTurbulence>
           <feColorMatrix type="saturate" values="0"></feColorMatrix>
@@ -68,7 +68,6 @@ const posts = (await getCollection("blog"))
       </nav>
 
       <header class="blog-masthead">
-        <p class="blog-kicker">Field Notes</p>
         <h1 class="blog-title">Systems & <em>Style</em></h1>
       </header>
 
