@@ -7,6 +7,12 @@ const DEFAULTS = {
 const GONG_URL = "/gong.mp3";
 const GONG_TIME = 5000;
 
+const MODE_LABELS: { [key: string]: string } = {
+  focus: "focus",
+  short: "short break",
+  long: "long break",
+};
+
 export interface TimerSettings {
   focus: { time: number; color: string };
   short: { time: number; color: string };
@@ -18,8 +24,10 @@ export class PomodoroTimer {
   private timeRemaining: number = 25 * 60;
   private isRunning: boolean = false;
   private timerId: number | null = null;
+  private endTime: number | null = null;
   private settings: TimerSettings;
   private audio: HTMLAudioElement;
+  private originalTitle: string = "";
 
   private readonly defaultSettings: TimerSettings = DEFAULTS;
 
@@ -33,6 +41,8 @@ export class PomodoroTimer {
     // Initialize audio
     this.audio = new Audio(GONG_URL);
     this.audio.volume = 0.5; // Set volume to 50%
+
+    this.originalTitle = "Pomodoro";
   }
 
   init() {
@@ -108,12 +118,24 @@ export class PomodoroTimer {
     });
   }
 
-  private updateDisplay() {
+  private formatTime(): string {
     const minutes = Math.floor(this.timeRemaining / 60);
     const seconds = this.timeRemaining % 60;
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  }
+
+  private updateDisplay() {
+    const formatted = this.formatTime();
     const timerDisplay = document.getElementById("timer-display");
     if (timerDisplay) {
-      timerDisplay.textContent = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+      timerDisplay.textContent = formatted;
+    }
+
+    if (this.isRunning) {
+      const label = MODE_LABELS[this.currentMode] || this.currentMode;
+      document.title = `${formatted} (${label})`;
+    } else {
+      document.title = this.originalTitle;
     }
   }
 
@@ -149,19 +171,32 @@ export class PomodoroTimer {
     const startStopBtn = document.getElementById("start-stop-btn");
     if (startStopBtn) startStopBtn.textContent = "Stop";
 
-    this.timerId = window.setInterval(() => {
-      if (this.timeRemaining > 0) {
-        this.timeRemaining--;
-        this.updateDisplay();
-      } else {
-        this.stopTimer();
-        this.playGong();
-      }
-    }, 1000);
+    // Anchor to an absolute end time so the countdown stays accurate even
+    // when the tab is backgrounded and setInterval is throttled.
+    this.endTime = Date.now() + this.timeRemaining * 1000;
+    this.updateDisplay();
+
+    this.timerId = window.setInterval(() => this.tick(), 250);
+  }
+
+  private tick() {
+    if (this.endTime === null) return;
+
+    const remaining = Math.round((this.endTime - Date.now()) / 1000);
+
+    if (remaining > 0) {
+      this.timeRemaining = remaining;
+      this.updateDisplay();
+    } else {
+      this.timeRemaining = 0;
+      this.stopTimer();
+      this.playGong();
+    }
   }
 
   private stopTimer() {
     this.isRunning = false;
+    this.endTime = null;
     const startStopBtn = document.getElementById("start-stop-btn");
     if (startStopBtn) startStopBtn.textContent = "Start";
 
@@ -169,6 +204,8 @@ export class PomodoroTimer {
       clearInterval(this.timerId);
       this.timerId = null;
     }
+
+    this.updateDisplay();
   }
 
   private switchMode(mode: string) {
@@ -198,6 +235,9 @@ export class PomodoroTimer {
 
   private add5Minutes() {
     this.timeRemaining += 5 * 60;
+    if (this.endTime !== null) {
+      this.endTime += 5 * 60 * 1000;
+    }
     this.updateDisplay();
   }
 
