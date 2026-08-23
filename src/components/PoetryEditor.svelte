@@ -7,6 +7,7 @@
   type Layout = "outline" | "fill" | "columns";
   type Unit = "phrase" | "word" | "letter";
   type Orientation = "follow" | "upright" | "radial";
+  type SelectMenu = "orientation" | "font";
   type Placement = Point & { text: string; angle: number; index: number };
   type SelectionTool = "keep" | "remove" | "lasso";
   type SelectionMethod = "none" | "alpha" | "background" | "ai";
@@ -35,6 +36,13 @@
     { value: "follow", label: "Follow shape" },
     { value: "upright", label: "Stay upright" },
     { value: "radial", label: "Face outward" },
+  ];
+
+  const typefaces = [
+    { value: "Georgia, serif", label: "Georgia" },
+    { value: '"Times New Roman", Times, serif', label: "Times" },
+    { value: "Arial, sans-serif", label: "Arial" },
+    { value: '"Courier New", monospace', label: "Monospace" },
   ];
 
   let poem = `a bird is a word with wings\na word is a wing with somewhere to go`;
@@ -82,6 +90,7 @@
   let selectionThreshold = 0.5;
   let selectionDetail = 8;
   let selectionSmoothness = 0;
+  let openSelect: SelectMenu | null = null;
 
   $: tokens = getTokens(poem, unit);
   $: placements = buildPlacements(
@@ -126,6 +135,116 @@
       .split(/\n+/)
       .map((line) => line.trim())
       .filter(Boolean);
+  }
+
+  function selectOptions(menu: SelectMenu) {
+    return menu === "orientation" ? orientations : typefaces;
+  }
+
+  function selectedOptionIndex(menu: SelectMenu) {
+    const value = menu === "orientation" ? orientation : fontFamily;
+    return Math.max(
+      0,
+      selectOptions(menu).findIndex((option) => option.value === value),
+    );
+  }
+
+  function selectedOptionLabel(menu: SelectMenu) {
+    return selectOptions(menu)[selectedOptionIndex(menu)]?.label ?? "Choose";
+  }
+
+  function focusSelectOption(menu: SelectMenu, index: number) {
+    const options = selectOptions(menu);
+    const wrappedIndex = (index + options.length) % options.length;
+    document
+      .getElementById(`${menu}-option-${wrappedIndex}`)
+      ?.focus({ preventScroll: true });
+  }
+
+  async function openSelectFromKeyboard(menu: SelectMenu, offset = 0) {
+    openSelect = menu;
+    await tick();
+    focusSelectOption(menu, selectedOptionIndex(menu) + offset);
+  }
+
+  function toggleSelect(menu: SelectMenu) {
+    openSelect = openSelect === menu ? null : menu;
+  }
+
+  async function chooseSelectOption(menu: SelectMenu, value: string) {
+    if (menu === "orientation") orientation = value as Orientation;
+    else fontFamily = value;
+    openSelect = null;
+    await tick();
+    document.getElementById(`${menu}-trigger`)?.focus({ preventScroll: true });
+  }
+
+  function handleSelectTriggerKeydown(event: KeyboardEvent, menu: SelectMenu) {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      openSelectFromKeyboard(menu, event.key === "ArrowDown" ? 0 : -1);
+    }
+    if (event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      openSelect = menu;
+      tick().then(() =>
+        focusSelectOption(
+          menu,
+          event.key === "Home" ? 0 : selectOptions(menu).length - 1,
+        ),
+      );
+    }
+    if (event.key === "Tab") openSelect = null;
+  }
+
+  function handleSelectOptionKeydown(
+    event: KeyboardEvent,
+    menu: SelectMenu,
+    index: number,
+  ) {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      focusSelectOption(menu, index + (event.key === "ArrowDown" ? 1 : -1));
+    }
+    if (event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      focusSelectOption(
+        menu,
+        event.key === "Home" ? 0 : selectOptions(menu).length - 1,
+      );
+    }
+    if (event.key === "Tab") openSelect = null;
+  }
+
+  function handleSelectFocusOut(event: FocusEvent, menu: SelectMenu) {
+    const container = event.currentTarget as HTMLElement;
+    if (
+      openSelect === menu &&
+      (!event.relatedTarget || !container.contains(event.relatedTarget as Node))
+    ) {
+      openSelect = null;
+    }
+  }
+
+  function handleWindowPointerDown(event: PointerEvent) {
+    if (
+      openSelect &&
+      (!(event.target instanceof Element) ||
+        !event.target.closest(".custom-select"))
+    ) {
+      openSelect = null;
+    }
+  }
+
+  function handleWindowKeydown(event: KeyboardEvent) {
+    if (event.key !== "Escape" || !openSelect) return;
+    const menu = openSelect;
+    openSelect = null;
+    tick().then(() =>
+      document
+        .getElementById(`${menu}-trigger`)
+        ?.focus({ preventScroll: true }),
+    );
   }
 
   function makeCircle(): Point[] {
@@ -1061,6 +1180,11 @@
   }
 </script>
 
+<svelte:window
+  on:pointerdown={handleWindowPointerDown}
+  on:keydown={handleWindowKeydown}
+/>
+
 <div class="poetry-app">
   <header class="editor-header">
     <a
@@ -1121,22 +1245,106 @@
         </div>
 
         <div class="select-row">
-          <label for="orientation">Direction</label>
-          <select id="orientation" bind:value={orientation}>
-            {#each orientations as option}
-              <option value={option.value}>{option.label}</option>
-            {/each}
-          </select>
+          <span class="select-label" id="orientation-label">Direction</span>
+          <div
+            class="custom-select"
+            on:focusout={(event) => handleSelectFocusOut(event, "orientation")}
+          >
+            <button
+              id="orientation-trigger"
+              class="custom-select-trigger"
+              class:open={openSelect === "orientation"}
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={openSelect === "orientation"}
+              aria-controls="orientation-menu"
+              aria-labelledby="orientation-label orientation-trigger"
+              on:click={() => toggleSelect("orientation")}
+              on:keydown={(event) =>
+                handleSelectTriggerKeydown(event, "orientation")}
+            >
+              <span>{selectedOptionLabel("orientation")}</span>
+              <i class="custom-select-caret" aria-hidden="true"></i>
+            </button>
+            {#if openSelect === "orientation"}
+              <div
+                id="orientation-menu"
+                class="custom-select-menu"
+                role="listbox"
+                aria-labelledby="orientation-label"
+              >
+                {#each orientations as option, index}
+                  <button
+                    id={`orientation-option-${index}`}
+                    class:selected={orientation === option.value}
+                    type="button"
+                    role="option"
+                    aria-selected={orientation === option.value}
+                    on:click={() =>
+                      chooseSelectOption("orientation", option.value)}
+                    on:keydown={(event) =>
+                      handleSelectOptionKeydown(event, "orientation", index)}
+                  >
+                    <span>{option.label}</span>
+                    {#if orientation === option.value}
+                      <span aria-hidden="true">✓</span>
+                    {/if}
+                  </button>
+                {/each}
+              </div>
+            {/if}
+          </div>
         </div>
 
         <div class="select-row">
-          <label for="font">Typeface</label>
-          <select id="font" bind:value={fontFamily}>
-            <option value={"Georgia, serif"}>Georgia</option>
-            <option value={'"Times New Roman", Times, serif'}>Times</option>
-            <option value={"Arial, sans-serif"}>Arial</option>
-            <option value={'"Courier New", monospace'}>Monospace</option>
-          </select>
+          <span class="select-label" id="font-label">Typeface</span>
+          <div
+            class="custom-select"
+            on:focusout={(event) => handleSelectFocusOut(event, "font")}
+          >
+            <button
+              id="font-trigger"
+              class="custom-select-trigger"
+              class:open={openSelect === "font"}
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={openSelect === "font"}
+              aria-controls="font-menu"
+              aria-labelledby="font-label font-trigger"
+              on:click={() => toggleSelect("font")}
+              on:keydown={(event) => handleSelectTriggerKeydown(event, "font")}
+            >
+              <span>{selectedOptionLabel("font")}</span>
+              <i class="custom-select-caret" aria-hidden="true"></i>
+            </button>
+            {#if openSelect === "font"}
+              <div
+                id="font-menu"
+                class="custom-select-menu"
+                role="listbox"
+                aria-labelledby="font-label"
+              >
+                {#each typefaces as option, index}
+                  <button
+                    id={`font-option-${index}`}
+                    class:selected={fontFamily === option.value}
+                    type="button"
+                    role="option"
+                    aria-selected={fontFamily === option.value}
+                    style={`font-family: ${option.value}`}
+                    on:click={() => chooseSelectOption("font", option.value)}
+                    on:keydown={(event) =>
+                      handleSelectOptionKeydown(event, "font", index)}
+                  >
+                    <span>{option.label}</span>
+                    {#if fontFamily === option.value}
+                      <span aria-hidden="true">✓</span>
+                    {/if}
+                  </button>
+                {/each}
+              </div>
+            {/if}
+          </div>
         </div>
 
         <label class="range-row">
@@ -1582,7 +1790,6 @@
 
   button,
   textarea,
-  select,
   input {
     font: inherit;
   }
@@ -1674,7 +1881,7 @@
   .section-heading > span,
   .section-heading small,
   .control-label,
-  .select-row label,
+  .select-label,
   .range-row > span,
   .toggle-row {
     font-family: var(--font-pp-editorial-sans);
@@ -1710,7 +1917,6 @@
   }
 
   textarea:focus,
-  select:focus-visible,
   button:focus-visible,
   input:focus-visible {
     outline: 2px solid var(--color-yellow-std);
@@ -1805,16 +2011,85 @@
     margin-top: 8px;
   }
 
-  select {
+  .custom-select {
+    position: relative;
+    min-width: 0;
+  }
+
+  .custom-select-trigger {
     width: 100%;
+    min-height: 29px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
     border: 0;
     border-bottom: 1px solid rgba(36, 36, 36, 0.5);
-    border-radius: 0;
-    padding: 4px 21px 4px 1px;
+    padding: 4px 5px 4px 1px;
     background: transparent;
-    color: var(--color-dark);
-    outline: none;
+    cursor: pointer;
     font-size: 0.85rem;
+    text-align: left;
+  }
+
+  .custom-select-trigger.open {
+    border-color: var(--color-dark);
+  }
+
+  .custom-select-caret {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 auto;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+  }
+
+  .custom-select-trigger.open .custom-select-caret {
+    transform: translateY(2px) rotate(225deg);
+  }
+
+  .custom-select-menu {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% - 1px);
+    right: 0;
+    left: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-dark);
+    background: var(--color-light);
+    box-shadow: 3px 3px 0 rgba(36, 36, 36, 0.22);
+  }
+
+  .custom-select-menu button {
+    width: 100%;
+    min-height: 31px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border: 0;
+    border-bottom: 1px solid rgba(36, 36, 36, 0.25);
+    padding: 5px 7px;
+    background: var(--color-light);
+    cursor: pointer;
+    font-size: 0.78rem;
+    text-align: left;
+  }
+
+  .custom-select-menu button:last-child {
+    border-bottom: 0;
+  }
+
+  .custom-select-menu button.selected {
+    background: var(--color-yellow-std);
+  }
+
+  .custom-select-menu button:hover,
+  .custom-select-menu button:focus-visible {
+    background: var(--color-dark);
+    color: var(--color-light);
+    outline: 0;
   }
 
   .range-row {
