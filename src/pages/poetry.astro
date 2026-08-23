@@ -1,0 +1,13 @@
+---
+import PoetryEditor from "../components/PoetryEditor.svelte";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Concrete Poetry — Joshua Motoaki Lau">
+  <meta
+    slot="head"
+    name="description"
+    content="Draw a shape, fill it with words, and export the result as an SVG or PNG."
+  />
+  <PoetryEditor client:load />
+</BaseLayout>
