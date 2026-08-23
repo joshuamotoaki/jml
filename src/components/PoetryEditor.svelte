@@ -1,9 +1,20 @@
 <script lang="ts">
+  import { contours } from "d3-contour";
+  import { onDestroy, tick } from "svelte";
+  import { automaticMaskFromPixels } from "../lib/poetry-image-mask";
+
   type Point = { x: number; y: number };
   type Layout = "outline" | "fill" | "columns";
   type Unit = "phrase" | "word" | "letter";
   type Orientation = "follow" | "upright" | "radial";
   type Placement = Point & { text: string; angle: number; index: number };
+  type SelectionTool = "keep" | "remove" | "lasso";
+  type SelectionMethod = "none" | "alpha" | "background" | "ai";
+  type SelectionStroke = {
+    brushMode: 1 | 2 | 3;
+    point: Point[];
+    isCompleted: boolean;
+  };
 
   const WIDTH = 900;
   const HEIGHT = 650;
@@ -44,6 +55,33 @@
   let svgElement: SVGSVGElement;
   let notice = "";
   let noticeTimer: ReturnType<typeof setTimeout> | undefined;
+  let imageToolOpen = false;
+  let imageUrl = "";
+  let imageName = "";
+  let imageWidth = 0;
+  let imageHeight = 0;
+  let imageInputElement: HTMLInputElement;
+  let selectionCanvasElement: HTMLCanvasElement;
+  let segmenterWorker: Worker | undefined;
+  let pendingBitmap: ImageBitmap | undefined;
+  let segmenterReady = false;
+  let segmenterImageReady = false;
+  let segmenterBusy = false;
+  let selectionStatus = "Upload an image to begin.";
+  let selectionError = "";
+  let selectionTool: SelectionTool = "keep";
+  let selectionStrokes: SelectionStroke[] = [];
+  let activeSelectionStroke: Point[] = [];
+  let selectionPointerDown = false;
+  let selectionMask: Float32Array | undefined;
+  let automaticSelectionMask: Float32Array | undefined;
+  let automaticSelectionMethod: "alpha" | "background" | undefined;
+  let selectionMethod: SelectionMethod = "none";
+  let selectionMaskWidth = 0;
+  let selectionMaskHeight = 0;
+  let selectionThreshold = 0.5;
+  let selectionDetail = 8;
+  let selectionSmoothness = 0;
 
   $: tokens = getTokens(poem, unit);
   $: placements = buildPlacements(
@@ -57,6 +95,27 @@
   );
   $: pathData = pointsToPath(points, closePath);
   $: characterCount = Array.from(poem).length;
+  $: importedMaskContour = selectionMask
+    ? contourFromMask(
+        selectionMask,
+        selectionMaskWidth,
+        selectionMaskHeight,
+        selectionThreshold,
+      )
+    : [];
+  $: importedShapePreview = fitImportedContour(
+    importedMaskContour,
+    selectionDetail,
+    selectionSmoothness,
+  );
+  $: importedShapePath = pointsToPath(importedShapePreview, true);
+  $: {
+    selectionMask;
+    selectionThreshold;
+    selectionStrokes;
+    activeSelectionStroke;
+    if (selectionCanvasElement) drawSelectionOverlay();
+  }
 
   function getTokens(value: string, selectedUnit: Unit) {
     const cleaned = value.replace(/\s+/g, " ").trim() || "word";
@@ -352,7 +411,7 @@
     const rowGap = size * 1.25 + gap;
     for (let y = minY + size; y < maxY; y += rowGap) {
       let x = minX + size / 2;
-      while (x < maxX && index < 1200) {
+      while (x < maxX) {
         const text = sourceTokens[index % sourceTokens.length];
         const width = tokenWidth(text, size);
         const point = { x: x + width / 2, y };
@@ -432,11 +491,562 @@
     drawing = true;
   }
 
+  function automaticSelectionStatus(method: "alpha" | "background") {
+    return method === "alpha"
+      ? "Transparent background detected — using the image’s exact edge."
+      : "Flat background detected — using a crisp pixel edge.";
+  }
+
+  function restoreAutomaticSelection() {
+    if (automaticSelectionMask && automaticSelectionMethod) {
+      selectionMask = automaticSelectionMask;
+      selectionMethod = automaticSelectionMethod;
+      selectionStatus = automaticSelectionStatus(automaticSelectionMethod);
+      return;
+    }
+    selectionMask = undefined;
+    selectionMethod = "none";
+    selectionStatus = segmenterImageReady
+      ? "Paint over the subject you want to keep."
+      : "Preparing the subject selector…";
+  }
+
+  function openImageTool() {
+    imageToolOpen = true;
+    selectionError = "";
+    if (!imageUrl) selectionStatus = "Upload an image to begin.";
+  }
+
+  function closeImageTool() {
+    imageToolOpen = false;
+    selectionPointerDown = false;
+    activeSelectionStroke = [];
+  }
+
+  function ensureSegmenter() {
+    if (segmenterWorker) return;
+    selectionStatus = "Loading the subject selector…";
+    segmenterBusy = true;
+    segmenterWorker = new Worker(
+      new URL("../workers/interactive-segmenter.worker.ts", import.meta.url),
+      { type: "module" },
+    );
+
+    segmenterWorker.onmessage = (
+      event: MessageEvent<
+        | { type: "READY" | "IMAGE_READY" }
+        | {
+            type: "MASK";
+            values: Float32Array;
+            width: number;
+            height: number;
+            elapsed: number;
+          }
+        | { type: "ERROR"; message: string }
+      >,
+    ) => {
+      const message = event.data;
+      if (message.type === "READY") {
+        segmenterReady = true;
+        segmenterBusy = false;
+        selectionStatus = imageUrl
+          ? "Preparing your image…"
+          : "Upload an image to begin.";
+        sendPendingImage();
+      }
+      if (message.type === "IMAGE_READY") {
+        segmenterImageReady = true;
+        segmenterBusy = false;
+        selectionStatus = automaticSelectionMask
+          ? "AI brush ready — paint only where the exact edge needs correction."
+          : "Paint over the subject you want to keep.";
+      }
+      if (message.type === "MASK") {
+        selectionMask = message.values;
+        selectionMaskWidth = message.width;
+        selectionMaskHeight = message.height;
+        selectionMethod = "ai";
+        segmenterBusy = false;
+        selectionStatus = `Selection updated in ${Math.max(1, Math.round(message.elapsed))}ms.`;
+      }
+      if (message.type === "ERROR") {
+        selectionError = message.message;
+        selectionStatus = "Subject selection could not start.";
+        segmenterBusy = false;
+      }
+    };
+
+    segmenterWorker.onerror = (event) => {
+      selectionError = event.message || "The subject selector stopped working.";
+      selectionStatus = "Subject selection could not start.";
+      segmenterBusy = false;
+    };
+    segmenterWorker.postMessage({ type: "INITIALIZE" });
+  }
+
+  function sendPendingImage() {
+    if (!segmenterReady || !segmenterWorker || !pendingBitmap) return;
+    segmenterBusy = true;
+    segmenterImageReady = false;
+    selectionStatus = "Reading the image…";
+    const bitmap = pendingBitmap;
+    pendingBitmap = undefined;
+    segmenterWorker.postMessage({ type: "SET_IMAGE", bitmap }, [bitmap]);
+  }
+
+  function startAiRefinement() {
+    selectionError = "";
+    if (segmenterImageReady) {
+      selectionStatus = "Paint where the selection needs correction.";
+      return;
+    }
+    if (!pendingBitmap) {
+      selectionError = "Choose the image again to start AI refinement.";
+      return;
+    }
+    ensureSegmenter();
+    sendPendingImage();
+  }
+
+  async function chooseImage(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      selectionError = "Choose a PNG, JPEG, or WebP image.";
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      selectionError = "That image is over 20 MB. Please choose a smaller one.";
+      return;
+    }
+
+    selectionError = "";
+    selectionMask = undefined;
+    automaticSelectionMask = undefined;
+    automaticSelectionMethod = undefined;
+    selectionMethod = "none";
+    selectionStrokes = [];
+    activeSelectionStroke = [];
+    segmenterWorker?.terminate();
+    segmenterWorker = undefined;
+    segmenterReady = false;
+    segmenterImageReady = false;
+    segmenterBusy = true;
+    imageName = file.name;
+    if (imageUrl) URL.revokeObjectURL(imageUrl);
+    imageUrl = URL.createObjectURL(file);
+    selectionStatus = "Reading the image edge…";
+
+    try {
+      const source = await createImageBitmap(file, {
+        imageOrientation: "from-image",
+      });
+      const longestSide = Math.max(source.width, source.height);
+      const scale = Math.min(1, 1200 / longestSide);
+      imageWidth = Math.max(1, Math.round(source.width * scale));
+      imageHeight = Math.max(1, Math.round(source.height * scale));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = imageWidth;
+      canvas.height = imageHeight;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      if (!context) throw new Error("This browser cannot read image pixels.");
+      context.clearRect(0, 0, imageWidth, imageHeight);
+      context.drawImage(source, 0, 0, imageWidth, imageHeight);
+      source.close();
+
+      const automaticSelection = automaticMaskFromPixels(
+        context.getImageData(0, 0, imageWidth, imageHeight),
+      );
+      pendingBitmap?.close();
+      pendingBitmap = await createImageBitmap(canvas);
+
+      if (automaticSelection) {
+        automaticSelectionMask = automaticSelection.values;
+        automaticSelectionMethod = automaticSelection.method;
+        selectionMask = automaticSelection.values;
+        selectionMaskWidth = imageWidth;
+        selectionMaskHeight = imageHeight;
+        selectionMethod = automaticSelection.method;
+        selectionStatus = automaticSelectionStatus(automaticSelection.method);
+        segmenterBusy = false;
+      } else {
+        selectionStatus = "Loading the subject selector…";
+        startAiRefinement();
+      }
+
+      await tick();
+      drawSelectionOverlay();
+    } catch (error) {
+      selectionError =
+        error instanceof Error ? error.message : "The image could not be read.";
+      segmenterBusy = false;
+    }
+  }
+
+  function handleImageInput(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    chooseImage(input.files?.[0]);
+    input.value = "";
+  }
+
+  function handleImageDrop(event: DragEvent) {
+    event.preventDefault();
+    chooseImage(event.dataTransfer?.files?.[0]);
+  }
+
+  function normalizedSelectionPoint(event: PointerEvent): Point {
+    const rect = selectionCanvasElement.getBoundingClientRect();
+    return {
+      x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),
+      y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)),
+    };
+  }
+
+  function startSelectionStroke(event: PointerEvent) {
+    if (!segmenterImageReady || segmenterBusy) return;
+    event.preventDefault();
+    selectionPointerDown = true;
+    selectionCanvasElement.setPointerCapture(event.pointerId);
+    activeSelectionStroke = [normalizedSelectionPoint(event)];
+  }
+
+  function continueSelectionStroke(event: PointerEvent) {
+    if (!selectionPointerDown) return;
+    const point = normalizedSelectionPoint(event);
+    const last = activeSelectionStroke[activeSelectionStroke.length - 1];
+    const rect = selectionCanvasElement.getBoundingClientRect();
+    const moved = last
+      ? Math.hypot(
+          (point.x - last.x) * rect.width,
+          (point.y - last.y) * rect.height,
+        )
+      : Infinity;
+    if (moved > 3) activeSelectionStroke = [...activeSelectionStroke, point];
+  }
+
+  function finishSelectionStroke(event: PointerEvent) {
+    if (!selectionPointerDown) return;
+    selectionPointerDown = false;
+    if (selectionCanvasElement.hasPointerCapture(event.pointerId)) {
+      selectionCanvasElement.releasePointerCapture(event.pointerId);
+    }
+    if (!activeSelectionStroke.length) return;
+    const brushMode =
+      selectionTool === "keep" ? 1 : selectionTool === "remove" ? 2 : 3;
+    selectionStrokes = [
+      ...selectionStrokes,
+      { brushMode, point: activeSelectionStroke, isCompleted: true },
+    ];
+    activeSelectionStroke = [];
+    runSegmentation();
+  }
+
+  function runSegmentation() {
+    if (!segmenterWorker || !segmenterImageReady || !selectionStrokes.length)
+      return;
+    segmenterBusy = true;
+    selectionStatus = "Finding the subject…";
+    segmenterWorker.postMessage({
+      type: "SEGMENT",
+      strokes: selectionStrokes,
+    });
+  }
+
+  function undoSelectionStroke() {
+    if (segmenterBusy || !selectionStrokes.length) return;
+    selectionStrokes = selectionStrokes.slice(0, -1);
+    if (selectionStrokes.length) {
+      runSegmentation();
+    } else {
+      restoreAutomaticSelection();
+    }
+  }
+
+  function resetSelection() {
+    if (segmenterBusy) return;
+    selectionStrokes = [];
+    activeSelectionStroke = [];
+    restoreAutomaticSelection();
+  }
+
+  function drawSelectionOverlay() {
+    if (!selectionCanvasElement || !imageWidth || !imageHeight) return;
+    if (
+      selectionCanvasElement.width !== imageWidth ||
+      selectionCanvasElement.height !== imageHeight
+    ) {
+      selectionCanvasElement.width = imageWidth;
+      selectionCanvasElement.height = imageHeight;
+    }
+    const context = selectionCanvasElement.getContext("2d");
+    if (!context) return;
+    context.clearRect(0, 0, imageWidth, imageHeight);
+
+    if (selectionMask && selectionMaskWidth && selectionMaskHeight) {
+      const maskCanvas = document.createElement("canvas");
+      maskCanvas.width = selectionMaskWidth;
+      maskCanvas.height = selectionMaskHeight;
+      const maskContext = maskCanvas.getContext("2d");
+      const imageData = maskContext?.createImageData(
+        selectionMaskWidth,
+        selectionMaskHeight,
+      );
+      if (maskContext && imageData) {
+        for (let index = 0; index < selectionMask.length; index += 1) {
+          const confidence = selectionMask[index];
+          const offset = index * 4;
+          imageData.data[offset] = 240;
+          imageData.data[offset + 1] = 199;
+          imageData.data[offset + 2] = 56;
+          imageData.data[offset + 3] =
+            confidence >= selectionThreshold
+              ? Math.round(72 + Math.min(1, confidence) * 92)
+              : 0;
+        }
+        maskContext.putImageData(imageData, 0, 0);
+        context.drawImage(maskCanvas, 0, 0, imageWidth, imageHeight);
+      }
+    }
+
+    const drawStroke = (stroke: SelectionStroke, active = false) => {
+      if (!stroke.point.length) return;
+      const color =
+        stroke.brushMode === 1
+          ? "#14865d"
+          : stroke.brushMode === 2
+            ? "#d34b42"
+            : "#315fb4";
+      context.save();
+      context.strokeStyle = color;
+      context.fillStyle = color;
+      context.globalAlpha = active ? 1 : 0.82;
+      context.lineWidth = Math.max(4, imageWidth * 0.006);
+      context.lineCap = "round";
+      context.lineJoin = "round";
+      context.beginPath();
+      stroke.point.forEach((point, index) => {
+        const x = point.x * imageWidth;
+        const y = point.y * imageHeight;
+        if (index === 0) context.moveTo(x, y);
+        else context.lineTo(x, y);
+      });
+      if (stroke.point.length === 1) {
+        context.arc(
+          stroke.point[0].x * imageWidth,
+          stroke.point[0].y * imageHeight,
+          context.lineWidth * 0.65,
+          0,
+          Math.PI * 2,
+        );
+        context.fill();
+      } else {
+        context.stroke();
+      }
+      context.restore();
+    };
+
+    selectionStrokes.forEach((stroke) => drawStroke(stroke));
+    if (activeSelectionStroke.length) {
+      drawStroke(
+        {
+          brushMode:
+            selectionTool === "keep" ? 1 : selectionTool === "remove" ? 2 : 3,
+          point: activeSelectionStroke,
+          isCompleted: false,
+        },
+        true,
+      );
+    }
+  }
+
+  function polygonArea(source: Point[]) {
+    let area = 0;
+    for (let index = 0; index < source.length; index += 1) {
+      const current = source[index];
+      const next = source[(index + 1) % source.length];
+      area += current.x * next.y - next.x * current.y;
+    }
+    return area / 2;
+  }
+
+  function pointToSegmentDistance(point: Point, start: Point, end: Point) {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    if (!dx && !dy) return distance(point, start);
+    const ratio = Math.max(
+      0,
+      Math.min(
+        1,
+        ((point.x - start.x) * dx + (point.y - start.y) * dy) /
+          (dx * dx + dy * dy),
+      ),
+    );
+    return distance(point, {
+      x: start.x + dx * ratio,
+      y: start.y + dy * ratio,
+    });
+  }
+
+  function simplifyOpenPath(source: Point[], tolerance: number): Point[] {
+    if (source.length <= 2) return source;
+    let furthestIndex = 0;
+    let furthestDistance = 0;
+    for (let index = 1; index < source.length - 1; index += 1) {
+      const candidate = pointToSegmentDistance(
+        source[index],
+        source[0],
+        source[source.length - 1],
+      );
+      if (candidate > furthestDistance) {
+        furthestDistance = candidate;
+        furthestIndex = index;
+      }
+    }
+    if (furthestDistance <= tolerance) {
+      return [source[0], source[source.length - 1]];
+    }
+    const first = simplifyOpenPath(
+      source.slice(0, furthestIndex + 1),
+      tolerance,
+    );
+    const second = simplifyOpenPath(source.slice(furthestIndex), tolerance);
+    return [...first.slice(0, -1), ...second];
+  }
+
+  function simplifyClosedPath(source: Point[], tolerance: number) {
+    if (source.length < 8) return source;
+    let splitIndex = 1;
+    let splitDistance = 0;
+    for (let index = 1; index < source.length; index += 1) {
+      const candidate = distance(source[0], source[index]);
+      if (candidate > splitDistance) {
+        splitDistance = candidate;
+        splitIndex = index;
+      }
+    }
+    const first = simplifyOpenPath(source.slice(0, splitIndex + 1), tolerance);
+    const second = simplifyOpenPath(
+      [...source.slice(splitIndex), source[0]],
+      tolerance,
+    );
+    return [...first.slice(0, -1), ...second.slice(0, -1)];
+  }
+
+  function reduceNearbyPoints(source: Point[], minimumDistance: number) {
+    if (source.length < 4) return source;
+    const result = [source[0]];
+    for (let index = 1; index < source.length; index += 1) {
+      if (
+        distance(result[result.length - 1], source[index]) >= minimumDistance
+      ) {
+        result.push(source[index]);
+      }
+    }
+    return result.length >= 3 ? result : source;
+  }
+
+  function smoothClosedPath(source: Point[], amount: number) {
+    let result = source;
+    const passes = Math.round(amount / 2);
+    for (let pass = 0; pass < passes; pass += 1) {
+      result = result.map((point, index) => {
+        const previous = result[(index - 1 + result.length) % result.length];
+        const next = result[(index + 1) % result.length];
+        return {
+          x: point.x * 0.62 + (previous.x + next.x) * 0.19,
+          y: point.y * 0.62 + (previous.y + next.y) * 0.19,
+        };
+      });
+    }
+    return result;
+  }
+
+  function contourFromMask(
+    values: Float32Array,
+    width: number,
+    height: number,
+    threshold: number,
+  ) {
+    if (!values.length || !width || !height) return [];
+    const contour = contours()
+      .size([width, height])
+      .smooth(true)
+      .contour(values as unknown as number[], threshold);
+    let largestRing: Point[] = [];
+    let largestArea = 0;
+    for (const polygon of contour.coordinates) {
+      const ring = polygon[0]?.map(([x, y]) => ({ x, y })) ?? [];
+      const area = Math.abs(polygonArea(ring));
+      if (area > largestArea) {
+        largestArea = area;
+        largestRing = ring;
+      }
+    }
+    if (largestRing.length < 3) return [];
+    const first = largestRing[0];
+    const last = largestRing[largestRing.length - 1];
+    if (distance(first, last) < 0.01) largestRing = largestRing.slice(0, -1);
+    return largestRing;
+  }
+
+  function fitImportedContour(
+    source: Point[],
+    detail: number,
+    smoothness: number,
+  ) {
+    if (source.length < 3) return [];
+    const minX = Math.min(...source.map((point) => point.x));
+    const maxX = Math.max(...source.map((point) => point.x));
+    const minY = Math.min(...source.map((point) => point.y));
+    const maxY = Math.max(...source.map((point) => point.y));
+    const availableWidth = WIDTH - 120;
+    const availableHeight = HEIGHT - 100;
+    const scale = Math.min(
+      availableWidth / Math.max(1, maxX - minX),
+      availableHeight / Math.max(1, maxY - minY),
+    );
+    const fitted = source.map((point) => ({
+      x: WIDTH / 2 + (point.x - (minX + maxX) / 2) * scale,
+      y: HEIGHT / 2 + (point.y - (minY + maxY) / 2) * scale,
+    }));
+    const tolerance = Math.max(0.7, 7.6 - detail * 0.68);
+    return smoothClosedPath(
+      simplifyClosedPath(
+        reduceNearbyPoints(fitted, Math.max(0.45, tolerance * 0.3)),
+        tolerance,
+      ),
+      smoothness,
+    );
+  }
+
+  function useImportedShape() {
+    if (importedShapePreview.length < 3) return;
+    previousPoints = points;
+    points = importedShapePreview;
+    closePath = true;
+    drawing = false;
+    showGuide = true;
+    closeImageTool();
+    announce(`Shape created from ${imageName || "image"}`);
+  }
+
+  function handleImageToolKeydown(event: KeyboardEvent) {
+    if (event.key === "Escape") closeImageTool();
+  }
+
   function announce(message: string) {
     notice = message;
     if (noticeTimer) clearTimeout(noticeTimer);
     noticeTimer = setTimeout(() => (notice = ""), 2400);
   }
+
+  onDestroy(() => {
+    if (noticeTimer) clearTimeout(noticeTimer);
+    if (imageUrl) URL.revokeObjectURL(imageUrl);
+    pendingBitmap?.close();
+    segmenterWorker?.postMessage({ type: "CLOSE" });
+    segmenterWorker?.terminate();
+  });
 
   function exportMarkup() {
     const clone = svgElement.cloneNode(true) as SVGSVGElement;
@@ -637,6 +1247,9 @@
           >
             <span>✎</span>{drawing ? "Drawing…" : "Draw"}
           </button>
+          <button type="button" on:click={openImageTool}>
+            <span>▧</span>From image
+          </button>
         </div>
         <div class="toggle-row">
           <label
@@ -767,6 +1380,263 @@
       </div>
     </section>
   </main>
+
+  {#if imageToolOpen}
+    <div
+      class="image-tool-backdrop"
+      role="presentation"
+      on:click={(event) => {
+        if (event.target === event.currentTarget) closeImageTool();
+      }}
+      on:keydown={handleImageToolKeydown}
+    >
+      <section
+        class="image-tool"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="image-tool-title"
+        tabindex="-1"
+      >
+        <header class="image-tool-header">
+          <div>
+            <span>Shape study</span>
+            <h2 id="image-tool-title">Make a shape from an image</h2>
+          </div>
+          <button
+            type="button"
+            on:click={closeImageTool}
+            aria-label="Close image shape tool">Close ×</button
+          >
+        </header>
+
+        {#if !imageUrl}
+          <button
+            class="image-dropzone"
+            type="button"
+            on:click={() => imageInputElement.click()}
+            on:dragover={(event) => event.preventDefault()}
+            on:drop={handleImageDrop}
+          >
+            <span>▧</span>
+            <strong>Drop an image here</strong>
+            <small>or choose a PNG, JPEG, or WebP · up to 20 MB</small>
+          </button>
+          <p class="model-status" class:error={selectionError}>
+            {selectionError || selectionStatus}
+          </p>
+        {:else}
+          <div class="image-tool-body">
+            <div class="selection-workspace">
+              <div class="selection-toolbar">
+                <div>
+                  <strong>{imageName}</strong>
+                  <span class:error={selectionError}>
+                    {selectionError || selectionStatus}
+                  </span>
+                </div>
+                <button type="button" on:click={() => imageInputElement.click()}
+                  >Replace image</button
+                >
+              </div>
+
+              <div class="subject-stage">
+                <div
+                  class:busy={segmenterBusy}
+                  class="subject-image"
+                  style={`aspect-ratio: ${imageWidth || 4} / ${imageHeight || 3}`}
+                >
+                  <img
+                    src={imageUrl}
+                    alt="Uploaded source for shape selection"
+                    draggable="false"
+                  />
+                  <canvas
+                    bind:this={selectionCanvasElement}
+                    class:paintable={segmenterImageReady}
+                    width={imageWidth}
+                    height={imageHeight}
+                    aria-label="Paint on the image to select a subject"
+                    on:pointerdown={startSelectionStroke}
+                    on:pointermove={continueSelectionStroke}
+                    on:pointerup={finishSelectionStroke}
+                    on:pointercancel={finishSelectionStroke}
+                  ></canvas>
+                  {#if segmenterBusy}
+                    <div class="selection-busy" aria-live="polite">
+                      <span></span>{selectionStatus}
+                    </div>
+                  {/if}
+                </div>
+              </div>
+
+              <div class="selection-key" aria-hidden="true">
+                {#if selectionMethod === "alpha"}
+                  <span class="exact-edge-label">Exact transparency edge</span>
+                {:else if selectionMethod === "background"}
+                  <span class="exact-edge-label">Flat background edge</span>
+                {:else}
+                  <span class="keep-dot"></span>Keep
+                  <span class="remove-dot"></span>Remove
+                  <span class="lasso-dot"></span>Lasso
+                {/if}
+              </div>
+            </div>
+
+            <aside class="selection-controls">
+              <section>
+                <div class="import-section-heading">
+                  <span>01</span>
+                  <h3>Select</h3>
+                </div>
+                {#if selectionMethod === "alpha"}
+                  <p>
+                    This PNG already has transparency, so its real pixel edge is
+                    used directly. No AI guess is needed.
+                  </p>
+                {:else if selectionMethod === "background"}
+                  <p>
+                    The background is flat enough to remove directly, preserving
+                    the artwork’s crisp edge.
+                  </p>
+                {:else}
+                  <p>
+                    Click or paint over the subject. Add another stroke to
+                    correct the selection.
+                  </p>
+                {/if}
+
+                {#if segmenterImageReady}
+                  <div class="selection-tools" aria-label="Selection brush">
+                    <button
+                      class:active={selectionTool === "keep"}
+                      type="button"
+                      on:click={() => (selectionTool = "keep")}
+                    >
+                      <span class="keep-dot"></span>Keep
+                    </button>
+                    <button
+                      class:active={selectionTool === "remove"}
+                      type="button"
+                      on:click={() => (selectionTool = "remove")}
+                    >
+                      <span class="remove-dot"></span>Remove
+                    </button>
+                    <button
+                      class:active={selectionTool === "lasso"}
+                      type="button"
+                      on:click={() => (selectionTool = "lasso")}
+                    >
+                      <span class="lasso-dot"></span>Lasso
+                    </button>
+                  </div>
+                  <div class="selection-actions">
+                    <button
+                      type="button"
+                      disabled={!selectionStrokes.length || segmenterBusy}
+                      on:click={undoSelectionStroke}>Undo mark</button
+                    >
+                    <button
+                      type="button"
+                      disabled={!selectionStrokes.length || segmenterBusy}
+                      on:click={resetSelection}>Start over</button
+                    >
+                  </div>
+                {:else if selectionMethod === "alpha" || selectionMethod === "background"}
+                  <button
+                    class="ai-refine-button"
+                    type="button"
+                    disabled={segmenterBusy}
+                    on:click={startAiRefinement}
+                  >
+                    Refine with AI brush
+                  </button>
+                {/if}
+              </section>
+
+              <section>
+                <div class="import-section-heading">
+                  <span>02</span>
+                  <h3>Refine</h3>
+                </div>
+                <label class="import-range">
+                  <span
+                    >Edge <output
+                      >{Math.round(selectionThreshold * 100)}%</output
+                    ></span
+                  >
+                  <input
+                    type="range"
+                    min="0.2"
+                    max="0.8"
+                    step="0.02"
+                    bind:value={selectionThreshold}
+                  />
+                </label>
+                <label class="import-range">
+                  <span>Detail <output>{selectionDetail}</output></span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    step="1"
+                    bind:value={selectionDetail}
+                  />
+                </label>
+                <label class="import-range">
+                  <span>Smooth <output>{selectionSmoothness}</output></span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    step="1"
+                    bind:value={selectionSmoothness}
+                  />
+                </label>
+
+                <div class="shape-result" class:empty={!importedShapePath}>
+                  {#if importedShapePath}
+                    <svg
+                      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+                      aria-label="Extracted shape preview"
+                    >
+                      <path
+                        d={importedShapePath}
+                        fill="rgba(36, 36, 36, 0.08)"
+                        stroke="currentColor"
+                        stroke-width="5"
+                      />
+                    </svg>
+                  {:else}
+                    <span>Your extracted silhouette will appear here.</span>
+                  {/if}
+                </div>
+              </section>
+
+              <div class="selection-confirm">
+                <p>
+                  The image stays in your browser. Only the outer silhouette
+                  becomes part of the poem.
+                </p>
+                <button
+                  type="button"
+                  disabled={importedShapePreview.length < 3 || segmenterBusy}
+                  on:click={useImportedShape}>Use this shape →</button
+                >
+              </div>
+            </aside>
+          </div>
+        {/if}
+
+        <input
+          bind:this={imageInputElement}
+          class="visually-hidden"
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          on:change={handleImageInput}
+        />
+      </section>
+    </div>
+  {/if}
 
   {#if notice}
     <div class="notice" role="status">{notice}</div>
@@ -926,6 +1796,10 @@
     grid-template-columns: repeat(3, 1fr);
     border-top: 1px solid rgba(36, 36, 36, 0.5);
     border-left: 1px solid rgba(36, 36, 36, 0.5);
+  }
+
+  .shape-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 
   .layout-grid button,
@@ -1155,6 +2029,457 @@
     cursor: pointer;
   }
 
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .image-tool-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: rgba(36, 36, 36, 0.72);
+  }
+
+  .image-tool {
+    position: relative;
+    width: min(1120px, calc(100vw - 32px));
+    height: min(780px, calc(100vh - 32px));
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+    border: 1px solid var(--color-dark);
+    background: var(--color-light);
+    box-shadow: 9px 9px 0 rgba(36, 36, 36, 0.45);
+  }
+
+  .image-tool-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: 68px;
+    padding: 9px 13px 9px 16px;
+    border-bottom: 1px solid var(--color-dark);
+  }
+
+  .image-tool-header > div {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+
+  .image-tool-header span,
+  .model-status,
+  .selection-toolbar,
+  .selection-key,
+  .import-section-heading > span,
+  .import-range > span,
+  .selection-confirm p {
+    font-family: var(--font-pp-editorial-sans);
+    font-size: 0.68rem;
+    letter-spacing: 0.065em;
+    text-transform: uppercase;
+  }
+
+  .image-tool-header span {
+    opacity: 0.55;
+  }
+
+  .image-tool-header h2 {
+    margin: 0;
+    font-size: clamp(1.3rem, 2.5vw, 2rem);
+    font-weight: 400;
+    letter-spacing: -0.035em;
+  }
+
+  .image-tool-header button,
+  .selection-toolbar button,
+  .selection-actions button,
+  .selection-confirm button {
+    min-height: 31px;
+    border: 1px solid var(--color-dark);
+    padding: 5px 9px;
+    background: transparent;
+    cursor: pointer;
+    font-family: var(--font-pp-editorial-sans);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+  }
+
+  .image-tool-header button:hover,
+  .selection-toolbar button:hover,
+  .selection-actions button:hover,
+  .selection-confirm button:hover,
+  .selection-confirm button:not(:disabled) {
+    background: var(--color-dark);
+    color: var(--color-light);
+  }
+
+  .image-dropzone {
+    width: calc(100% - 36px);
+    height: calc(100% - 36px);
+    align-self: center;
+    justify-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px dashed var(--color-dark);
+    background: #deded8;
+    color: var(--color-dark);
+    cursor: pointer;
+  }
+
+  .image-dropzone > span {
+    font-size: 4rem;
+    line-height: 1;
+  }
+
+  .image-dropzone strong {
+    font-size: clamp(1.35rem, 3vw, 2.25rem);
+    font-weight: 400;
+  }
+
+  .image-dropzone small {
+    font-family: var(--font-pp-editorial-sans);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+  }
+
+  .model-status {
+    position: absolute;
+    bottom: 32px;
+    margin: 0;
+  }
+
+  .error {
+    color: #b92f28 !important;
+  }
+
+  .image-tool-body {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 304px;
+  }
+
+  .selection-workspace {
+    min-width: 0;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    padding: 11px 13px 9px;
+    background: #d7d7d1;
+  }
+
+  .selection-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 9px;
+  }
+
+  .selection-toolbar > div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .selection-toolbar strong,
+  .selection-toolbar span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .selection-toolbar strong {
+    font-weight: 500;
+  }
+
+  .selection-toolbar span {
+    opacity: 0.65;
+  }
+
+  .subject-stage {
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid var(--color-dark);
+    background:
+      linear-gradient(45deg, #e8e8e3 25%, transparent 25%),
+      linear-gradient(-45deg, #e8e8e3 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #e8e8e3 75%),
+      linear-gradient(-45deg, transparent 75%, #e8e8e3 75%), #f4f4ef;
+    background-position:
+      0 0,
+      0 8px,
+      8px -8px,
+      -8px 0;
+    background-size: 16px 16px;
+  }
+
+  .subject-image {
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .subject-image img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    object-fit: contain;
+    user-select: none;
+  }
+
+  .subject-image canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    cursor: default;
+    touch-action: none;
+  }
+
+  .subject-image canvas.paintable {
+    cursor: crosshair;
+  }
+
+  .subject-image.busy canvas {
+    pointer-events: none;
+  }
+
+  .selection-busy {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    background: rgba(240, 240, 240, 0.78);
+    font-family: var(--font-pp-editorial-sans);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+  }
+
+  .selection-busy span {
+    width: 13px;
+    height: 13px;
+    border: 1px solid var(--color-dark);
+    background: linear-gradient(
+      135deg,
+      var(--color-dark) 0 45%,
+      transparent 45% 55%,
+      var(--color-dark) 55%
+    );
+  }
+
+  .selection-key {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    min-height: 27px;
+  }
+
+  .selection-key span:not(:first-child) {
+    margin-left: 8px;
+  }
+
+  .exact-edge-label {
+    padding: 3px 6px;
+    border: 1px solid rgba(36, 36, 36, 0.5);
+    background: var(--color-light);
+  }
+
+  .keep-dot,
+  .remove-dot,
+  .lasso-dot {
+    width: 8px;
+    height: 8px;
+    display: inline-block;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: #14865d;
+  }
+
+  .remove-dot {
+    background: #d34b42;
+  }
+
+  .lasso-dot {
+    background: #315fb4;
+  }
+
+  .selection-controls {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    border-left: 1px solid var(--color-dark);
+  }
+
+  .selection-controls > section {
+    padding: 12px 14px 14px;
+    border-bottom: 1px solid rgba(36, 36, 36, 0.4);
+  }
+
+  .import-section-heading {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    align-items: baseline;
+    margin-bottom: 5px;
+  }
+
+  .import-section-heading > span {
+    opacity: 0.55;
+  }
+
+  .import-section-heading h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 400;
+  }
+
+  .selection-controls section > p {
+    margin: 0 0 9px 28px;
+    font-size: 0.84rem;
+    line-height: 1.25;
+  }
+
+  .selection-tools {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin-left: 28px;
+    border: 1px solid rgba(36, 36, 36, 0.55);
+  }
+
+  .selection-tools button {
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: 0;
+    border-right: 1px solid rgba(36, 36, 36, 0.55);
+    background: transparent;
+    cursor: pointer;
+    font-family: var(--font-pp-editorial-sans);
+    font-size: 0.67rem;
+    text-transform: uppercase;
+  }
+
+  .selection-tools button:last-child {
+    border-right: 0;
+  }
+
+  .selection-tools button.active {
+    background: var(--color-dark);
+    color: var(--color-light);
+  }
+
+  .selection-actions {
+    display: flex;
+    gap: 6px;
+    margin: 8px 0 0 28px;
+  }
+
+  .selection-actions button {
+    flex: 1;
+  }
+
+  .ai-refine-button {
+    width: calc(100% - 28px);
+    min-height: 32px;
+    margin: 0 0 0 28px;
+    border: 1px solid var(--color-dark);
+    background: transparent;
+    cursor: pointer;
+    font-family: var(--font-pp-editorial-sans);
+    font-size: 0.67rem;
+    text-transform: uppercase;
+  }
+
+  .ai-refine-button:hover {
+    background: var(--color-dark);
+    color: var(--color-light);
+  }
+
+  .selection-actions button:disabled,
+  .selection-confirm button:disabled {
+    cursor: default;
+    opacity: 0.35;
+    background: transparent;
+    color: var(--color-dark);
+  }
+
+  .import-range {
+    display: block;
+    margin: 7px 0 0 28px;
+  }
+
+  .import-range > span {
+    display: flex;
+    justify-content: space-between;
+    opacity: 0.72;
+  }
+
+  .shape-result {
+    height: 124px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 9px 0 0 28px;
+    border: 1px solid rgba(36, 36, 36, 0.55);
+    background: #e8e8e3;
+  }
+
+  .shape-result svg {
+    width: 100%;
+    height: 100%;
+    padding: 7px;
+    color: var(--color-dark);
+  }
+
+  .shape-result > span {
+    max-width: 170px;
+    text-align: center;
+    font-size: 0.78rem;
+    line-height: 1.25;
+    opacity: 0.55;
+  }
+
+  .selection-confirm {
+    margin-top: auto;
+    padding: 11px 14px 13px;
+  }
+
+  .selection-confirm p {
+    margin: 0 0 8px;
+    line-height: 1.35;
+    opacity: 0.62;
+  }
+
+  .selection-confirm button {
+    width: 100%;
+  }
+
   .notice {
     position: fixed;
     right: 18px;
@@ -1213,7 +2538,7 @@
     }
 
     .control-section:last-child .shape-grid {
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(7, 1fr);
     }
 
     .stage-panel {
@@ -1270,6 +2595,58 @@
 
     .export-actions button {
       flex: 1;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .image-tool {
+      height: calc(100vh - 20px);
+      width: calc(100vw - 20px);
+    }
+
+    .image-tool-body {
+      grid-template-columns: 1fr;
+      overflow-y: auto;
+    }
+
+    .selection-workspace {
+      min-height: 520px;
+    }
+
+    .selection-controls {
+      overflow: visible;
+      border-top: 1px solid var(--color-dark);
+      border-left: 0;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .image-tool-backdrop {
+      padding: 0;
+    }
+
+    .image-tool {
+      width: 100vw;
+      height: 100vh;
+      border: 0;
+      box-shadow: none;
+    }
+
+    .image-tool-header > div {
+      display: block;
+    }
+
+    .image-tool-header span {
+      display: none;
+    }
+
+    .selection-workspace {
+      min-height: 440px;
+      padding: 8px;
+    }
+
+    .selection-toolbar span {
+      display: none;
     }
   }
 </style>
