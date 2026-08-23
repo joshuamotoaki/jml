@@ -144,6 +144,16 @@
       .filter(Boolean);
   }
 
+  function placementCountLabel(count: number, selectedUnit: Unit) {
+    const label =
+      selectedUnit === "phrase"
+        ? "phrase"
+        : selectedUnit === "word"
+          ? "word"
+          : "letter";
+    return `${count} ${label}${count === 1 ? "" : "s"}`;
+  }
+
   function selectOptions(menu: SelectMenu) {
     return menu === "orientation" ? orientations : typefaces;
   }
@@ -1284,7 +1294,10 @@
         <div class="section-heading">
           <span>01</span>
           <h2>Words</h2>
-          <small>{characterCount} characters</small>
+          <small
+            >{characterCount}
+            {characterCount === 1 ? "letter" : "letters"}</small
+          >
         </div>
         <textarea bind:value={poem} aria-label="Poem text" spellcheck="true"
         ></textarea>
@@ -1478,7 +1491,7 @@
         <p>
           {drawing
             ? "Drag anywhere on the paper to draw a new path."
-            : `${placements.length} pieces of text · ${layout}`}
+            : `${placementCountLabel(placements.length, unit)} · ${layout}`}
         </p>
         <div>
           <button
@@ -1927,13 +1940,12 @@
     font-family: var(--font-pp-editorial-sans);
     font-size: 0.62rem;
     letter-spacing: 0.11em;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    text-decoration: none;
     text-transform: uppercase;
   }
 
   .editor-byline:hover {
-    opacity: 0.55;
+    color: var(--color-red-std);
   }
 
   .editor-byline-jp {
