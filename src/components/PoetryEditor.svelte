@@ -20,6 +20,9 @@
     endShape: Point[];
     startClosed: boolean;
     endClosed: boolean;
+    layout: Layout;
+    size: number;
+    gap: number;
     startPlacements: Placement[];
     endPlacements: Placement[];
   };
@@ -780,6 +783,9 @@
         endShape: clonePoints(shape),
         startClosed: start.closed,
         endClosed: end.closed,
+        layout: selectedLayout,
+        size,
+        gap,
         startPlacements: staticPlacements.map((placement) => ({
           ...placement,
         })),
@@ -809,17 +815,17 @@
       gap,
       end.closed,
     );
-    let count = Math.min(rawStart.length, rawEnd.length);
+    const count = Math.min(rawStart.length, rawEnd.length);
     if (!count) return undefined;
 
     let startPlacements: Placement[];
     let endPlacements: Placement[];
     if (selectedLayout === "outline") {
-      let attempts = 0;
-      do {
-        startPlacements = samplePlacementsEvenly(rawStart, count).map(
-          (placement, index) => ({ ...placement, index }),
-        );
+      if (rawStart.length <= rawEnd.length) {
+        startPlacements = rawStart.map((placement, index) => ({
+          ...placement,
+          index,
+        }));
         endPlacements = samplePlacementsEvenly(rawEnd, count).map(
           (placement, index) => ({
             ...placement,
@@ -827,11 +833,19 @@
             index,
           }),
         );
-        if (!motionPlacementsCollide(startPlacements, endPlacements, size, gap))
-          break;
-        count = Math.max(1, count - Math.max(1, Math.ceil(count * 0.05)));
-        attempts += 1;
-      } while (count > 1 && attempts < 20);
+      } else {
+        endPlacements = rawEnd.map((placement, index) => ({
+          ...placement,
+          index,
+        }));
+        startPlacements = samplePlacementsEvenly(rawStart, count).map(
+          (placement, index) => ({
+            ...placement,
+            text: endPlacements[index].text,
+            index,
+          }),
+        );
+      }
     } else {
       startPlacements = samplePlacementsEvenly(rawStart, count).map(
         (placement, index) => ({
@@ -855,6 +869,9 @@
       endShape,
       startClosed: start.closed,
       endClosed: end.closed,
+      layout: selectedLayout,
+      size,
+      gap,
       startPlacements,
       endPlacements,
     };
@@ -885,44 +902,63 @@
     return a + difference * progress;
   }
 
-  function motionPlacementsCollide(
-    start: Placement[],
-    end: Placement[],
+  function resolveMotionPlacementCollisions(
+    source: Placement[],
     size: number,
     gap: number,
   ) {
-    const samples = [0, 0.25, 0.5, 0.75, 1];
-    const frameBoxes = samples.map(() => [] as CollisionBox[]);
-    for (let index = 0; index < start.length; index += 1) {
-      for (let frameIndex = 0; frameIndex < samples.length; frameIndex += 1) {
-        const progress = samples[frameIndex];
-        const placement = {
-          x: start[index].x + (end[index].x - start[index].x) * progress,
-          y: start[index].y + (end[index].y - start[index].y) * progress,
-          angle: interpolateAngle(
-            start[index].angle,
-            end[index].angle,
-            progress,
-          ),
+    const result: Placement[] = [];
+    const placedBoxes: CollisionBox[] = [];
+    const step = Math.max(1.5, size * 0.1, gap * 0.08);
+    const maximumSteps = 18;
+
+    for (const placement of source) {
+      const radians = placement.angle * (Math.PI / 180);
+      const tangent = { x: Math.cos(radians), y: Math.sin(radians) };
+      const offsets = [0];
+      for (let attempt = 1; attempt <= maximumSteps; attempt += 1) {
+        const direction = attempt % 2 === 1 ? 1 : -1;
+        offsets.push(direction * Math.ceil(attempt / 2) * step);
+      }
+
+      let bestPlacement = placement;
+      let bestBox = makeCollisionBox(
+        placement,
+        tokenWidth(placement.text, size),
+        size,
+        placement.angle,
+        gap,
+      );
+      let fewestOverlaps = Number.POSITIVE_INFINITY;
+      for (const offset of offsets) {
+        const candidate = {
+          ...placement,
+          x: placement.x + tangent.x * offset,
+          y: placement.y + tangent.y * offset,
         };
-        const box = makeCollisionBox(
-          placement,
-          tokenWidth(start[index].text, size),
+        const candidateBox = makeCollisionBox(
+          candidate,
+          tokenWidth(candidate.text, size),
           size,
-          placement.angle,
+          candidate.angle,
           gap,
         );
-        if (
-          frameBoxes[frameIndex].some((placed) =>
-            collisionBoxesOverlap(box, placed),
-          )
-        ) {
-          return true;
+        const overlaps = placedBoxes.reduce(
+          (total, placed) =>
+            total + (collisionBoxesOverlap(candidateBox, placed) ? 1 : 0),
+          0,
+        );
+        if (overlaps < fewestOverlaps) {
+          bestPlacement = candidate;
+          bestBox = candidateBox;
+          fewestOverlaps = overlaps;
         }
-        frameBoxes[frameIndex].push(box);
+        if (!overlaps) break;
       }
+      result.push(bestPlacement);
+      placedBoxes.push(bestBox);
     }
-    return false;
+    return result;
   }
 
   function interpolateMotionPlacements(
@@ -932,7 +968,7 @@
     letterBehavior: LetterMotion,
   ) {
     const count = plan.startPlacements.length;
-    return plan.startPlacements.map((start, index) => {
+    const placements = plan.startPlacements.map((start, index) => {
       const end = plan.endPlacements[index];
       const offset =
         letterBehavior === "ripple" && count > 1
@@ -947,6 +983,10 @@
         index: start.index,
       };
     });
+    if (plan.layout !== "outline" || progress <= 0.001 || progress >= 0.999) {
+      return placements;
+    }
+    return resolveMotionPlacementCollisions(placements, plan.size, plan.gap);
   }
 
   function interpolateMotionShape(plan: MotionPlan, progress: number) {
@@ -1071,7 +1111,7 @@
       let index = 0;
       const collisionBoxes: CollisionBox[] = [];
       const collisionSearchStep = Math.max(2, size * 0.15, gap * 0.2);
-      while (cursor < total - size * 0.25 && index < 700) {
+      while (cursor < total - size * 0.25) {
         const text = sourceTokens[index % sourceTokens.length];
         const width = tokenWidth(text, size);
         if (cursor + width > total) break;
@@ -2003,7 +2043,7 @@
       `${poem}-${motionPlan.startPlacements.length}-${motionDuration}-${motionFeel}-${letterMotion}`,
     )}`;
     const frameCount =
-      letterMotion === "attached" ? (motionLoop ? 3 : 2) : motionLoop ? 33 : 25;
+      letterMotion === "ripple" ? (motionLoop ? 33 : 25) : motionLoop ? 17 : 9;
     const frames = Array.from({ length: frameCount }, (_, frameIndex) => {
       const phase = frameIndex / (frameCount - 1);
       const progress = motionLoop
@@ -2019,14 +2059,7 @@
       );
     });
     const totalDuration = motionDuration * (motionLoop ? 2 : 1);
-    const timingFunction =
-      letterMotion === "ripple"
-        ? "linear"
-        : motionFeel === "playful"
-          ? "cubic-bezier(0.34,1.56,0.64,1)"
-          : motionFeel === "snappy"
-            ? "cubic-bezier(0.22,1,0.36,1)"
-            : "cubic-bezier(0.4,0,0.2,1)";
+    const timingFunction = "linear";
     const animationTargets =
       motionTrigger === "hover"
         ? [`.${prefix}:hover`, `.${prefix}:focus`]
