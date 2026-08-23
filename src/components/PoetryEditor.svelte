@@ -9,6 +9,13 @@
   type Orientation = "follow" | "upright" | "radial";
   type SelectMenu = "orientation" | "font";
   type Placement = Point & { text: string; angle: number; index: number };
+  type CollisionBox = {
+    center: Point;
+    halfWidth: number;
+    halfHeight: number;
+    xAxis: Point;
+    yAxis: Point;
+  };
   type SelectionTool = "keep" | "remove" | "lasso";
   type SelectionMethod = "none" | "alpha" | "background" | "ai";
   type SelectionStroke = {
@@ -333,6 +340,52 @@
     return Math.max(size * 0.62, Array.from(text).length * size * 0.54);
   }
 
+  function makeCollisionBox(
+    center: Point,
+    width: number,
+    size: number,
+    angle: number,
+    gap: number,
+  ): CollisionBox {
+    const radians = angle * (Math.PI / 180);
+    const padding = Math.max(0.75, Math.min(size * 0.08, gap * 0.15));
+    return {
+      center,
+      halfWidth: width / 2 + padding,
+      halfHeight: size * 0.48 + padding,
+      xAxis: { x: Math.cos(radians), y: Math.sin(radians) },
+      yAxis: { x: -Math.sin(radians), y: Math.cos(radians) },
+    };
+  }
+
+  function dotProduct(a: Point, b: Point) {
+    return a.x * b.x + a.y * b.y;
+  }
+
+  function projectionRadius(box: CollisionBox, axis: Point) {
+    return (
+      box.halfWidth * Math.abs(dotProduct(box.xAxis, axis)) +
+      box.halfHeight * Math.abs(dotProduct(box.yAxis, axis))
+    );
+  }
+
+  function collisionBoxesOverlap(a: CollisionBox, b: CollisionBox) {
+    const centerDifference = {
+      x: b.center.x - a.center.x,
+      y: b.center.y - a.center.y,
+    };
+    for (const axis of [a.xAxis, a.yAxis, b.xAxis, b.yAxis]) {
+      const centerDistance = Math.abs(dotProduct(centerDifference, axis));
+      if (
+        centerDistance >=
+        projectionRadius(a, axis) + projectionRadius(b, axis)
+      ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   function centerOf(source: Point[]) {
     if (!source.length) return { x: WIDTH / 2, y: HEIGHT / 2 };
     return {
@@ -396,22 +449,42 @@
         : 0;
       let cursor = size * 0.5;
       let index = 0;
+      const collisionBoxes: CollisionBox[] = [];
+      const collisionSearchStep = Math.max(2, size * 0.15, gap * 0.2);
       while (cursor < total - size * 0.25 && index < 700) {
         const text = sourceTokens[index % sourceTokens.length];
         const width = tokenWidth(text, size);
+        if (cursor + width > total) break;
         const pathPoint = pointOnPath(segments, cursor + width / 2);
+        const angle = placementAngle(
+          selectedOrientation,
+          pathPoint.angle,
+          pathPoint.point,
+          center,
+          selectedLayout,
+        );
+        const collisionBox = makeCollisionBox(
+          pathPoint.point,
+          width,
+          size,
+          angle,
+          gap,
+        );
+        if (
+          collisionBoxes.some((placedBox) =>
+            collisionBoxesOverlap(collisionBox, placedBox),
+          )
+        ) {
+          cursor += collisionSearchStep;
+          continue;
+        }
         result.push({
           ...pathPoint.point,
           text,
-          angle: placementAngle(
-            selectedOrientation,
-            pathPoint.angle,
-            pathPoint.point,
-            center,
-            selectedLayout,
-          ),
+          angle,
           index,
         });
+        collisionBoxes.push(collisionBox);
         cursor += width + gap;
         index += 1;
       }
