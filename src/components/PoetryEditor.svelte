@@ -1185,25 +1185,28 @@
   on:keydown={handleWindowKeydown}
 />
 
-<div class="poetry-app">
-  <header class="editor-header">
-    <a
-      class="editor-brand"
-      href="/"
-      aria-label="Back to Joshua Motoaki Lau home"
-    >
-      <span class="brand-jp">劉元明</span>
-      <span>JML</span>
-    </a>
-    <div class="editor-title">
-      <span>Concrete</span>
-      <em>Poetry</em>
-    </div>
-    <div class="editor-index">/poetry — 01</div>
-  </header>
+<svg class="poetry-texture-definitions" aria-hidden="true">
+  <defs>
+    <filter id="poetryPageNoise">
+      <feTurbulence baseFrequency="0.4" numOctaves="3" stitchTiles="noStitch"
+      ></feTurbulence>
+      <feColorMatrix type="saturate" values="0"></feColorMatrix>
+    </filter>
+  </defs>
+</svg>
 
+<div class="poetry-app">
   <main class="editor-shell">
     <aside class="control-panel">
+      <div class="sidebar-heading">
+        <div class="editor-title">
+          <span>Concrete</span>
+          <em>Poetry</em>
+        </div>
+        <a class="editor-byline" href="/"
+          >by <span class="editor-byline-jp">劉元明</span> · JML</a
+        >
+      </div>
       <section class="control-section words-section">
         <div class="section-heading">
           <span>01</span>
@@ -1799,36 +1802,38 @@
   }
 
   .poetry-app {
+    isolation: isolate;
     height: 100vh;
     overflow: hidden;
     background: var(--color-light);
     color: var(--color-dark);
   }
 
-  .editor-header {
-    height: 76px;
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    gap: 18px;
-    padding: 6px 16px;
-    border-bottom: 1px solid var(--color-dark);
-    background: var(--color-light);
+  .poetry-texture-definitions {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
   }
 
-  .editor-brand {
+  .poetry-app::after {
+    content: "";
+    position: fixed;
+    z-index: 10;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.1);
+    filter: url(#poetryPageNoise);
+    opacity: 0.22;
+    pointer-events: none;
+  }
+
+  .sidebar-heading {
     display: flex;
-    align-items: baseline;
-    gap: 10px;
-    width: fit-content;
-    color: inherit;
-    text-decoration: none;
-    font-size: clamp(1.9rem, 3.2vw, 2.9rem);
-    letter-spacing: -0.08em;
-  }
-
-  .brand-jp {
-    font-family: var(--font-noto-serif-jp);
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 14px 9px;
+    border-bottom: 1px solid var(--color-dark);
+    line-height: 1;
   }
 
   .editor-title {
@@ -1843,18 +1848,30 @@
     font-weight: 200;
   }
 
-  .editor-index {
-    justify-self: end;
+  .editor-byline {
+    margin-top: 3px;
+    color: inherit;
     font-family: var(--font-pp-editorial-sans);
-    font-size: 0.78rem;
-    letter-spacing: 0.08em;
+    font-size: 0.62rem;
+    letter-spacing: 0.11em;
+    text-decoration: underline;
+    text-underline-offset: 2px;
     text-transform: uppercase;
+  }
+
+  .editor-byline:hover {
+    opacity: 0.55;
+  }
+
+  .editor-byline-jp {
+    font-family: var(--font-noto-serif-jp);
+    letter-spacing: 0.03em;
   }
 
   .editor-shell {
     display: grid;
     grid-template-columns: minmax(290px, 330px) minmax(0, 1fr);
-    height: calc(100vh - 76px);
+    height: 100vh;
     min-height: 0;
   }
 
@@ -1971,6 +1988,15 @@
     color: var(--color-light);
   }
 
+  .layout-grid button.active {
+    background: var(--color-yellow-std);
+    color: var(--color-dark);
+  }
+
+  .shape-grid button:nth-child(4) span {
+    color: var(--color-red-std);
+  }
+
   .control-label {
     display: block;
     margin: 9px 0 5px;
@@ -1999,6 +2025,11 @@
   }
 
   .segmented button:hover,
+  .segmented button:hover {
+    background: var(--color-dark);
+    color: var(--color-light);
+  }
+
   .segmented button.active {
     background: var(--color-dark);
     color: var(--color-light);
@@ -2155,6 +2186,8 @@
 
   .stage-toolbar p {
     margin: 0;
+    border-left: 4px solid var(--color-red-std);
+    padding-left: 7px;
   }
 
   .stage-toolbar > div,
@@ -2178,10 +2211,19 @@
   }
 
   .stage-toolbar button:hover,
-  .export-actions button:hover,
-  .export-actions button.primary {
+  .export-actions button:hover {
     background: var(--color-dark);
     color: var(--color-light);
+  }
+
+  .export-actions button.primary {
+    background: var(--color-orange-std);
+    color: var(--color-dark);
+  }
+
+  .export-actions button.primary:hover {
+    background: var(--color-yellow-std);
+    color: var(--color-dark);
   }
 
   .stage-toolbar button:disabled {
@@ -2190,6 +2232,8 @@
   }
 
   .canvas-wrap {
+    position: relative;
+    z-index: 11;
     min-height: 0;
     height: 100%;
     display: flex;
@@ -2707,16 +2751,8 @@
       overflow: visible;
     }
 
-    .editor-header {
-      height: 72px;
-    }
-
-    .editor-index {
-      display: none;
-    }
-
-    .editor-header {
-      grid-template-columns: 1fr auto;
+    .sidebar-heading {
+      grid-column: 1 / -1;
     }
 
     .editor-shell {
@@ -2749,17 +2785,6 @@
   }
 
   @media (max-width: 620px) {
-    .editor-header {
-      padding: 8px 11px;
-    }
-
-    .editor-title {
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 0;
-      line-height: 0.9;
-    }
-
     .control-panel {
       grid-template-columns: 1fr;
     }
