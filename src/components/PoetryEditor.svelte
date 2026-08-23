@@ -148,76 +148,12 @@
     });
   }
 
-  function makeWave(): Point[] {
-    return Array.from({ length: 140 }, (_, index) => {
-      const ratio = index / 139;
-      return {
-        x: 85 + ratio * 730,
-        y: 325 + Math.sin(ratio * Math.PI * 4) * 145,
-      };
-    });
-  }
-
-  function makeSpiral(): Point[] {
-    return Array.from({ length: 180 }, (_, index) => {
-      const ratio = index / 179;
-      const angle = ratio * Math.PI * 6 - Math.PI / 2;
-      const radius = 18 + ratio * 245;
-      return {
-        x: 450 + Math.cos(angle) * radius,
-        y: 325 + Math.sin(angle) * radius,
-      };
-    });
-  }
-
-  function makeBird(): Point[] {
-    const anchors: Point[] = [
-      { x: 450, y: 298 },
-      { x: 385, y: 252 },
-      { x: 300, y: 205 },
-      { x: 155, y: 176 },
-      { x: 260, y: 282 },
-      { x: 170, y: 402 },
-      { x: 330, y: 343 },
-      { x: 450, y: 486 },
-      { x: 570, y: 343 },
-      { x: 730, y: 402 },
-      { x: 640, y: 282 },
-      { x: 745, y: 176 },
-      { x: 600, y: 205 },
-      { x: 515, y: 252 },
-    ];
-
-    return densify(anchors, 9, true);
-  }
-
-  function densify(source: Point[], steps: number, closed: boolean) {
-    const result: Point[] = [];
-    const segmentCount = closed ? source.length : source.length - 1;
-    for (let index = 0; index < segmentCount; index += 1) {
-      const start = source[index];
-      const end = source[(index + 1) % source.length];
-      for (let step = 0; step < steps; step += 1) {
-        const ratio = step / steps;
-        result.push({
-          x: start.x + (end.x - start.x) * ratio,
-          y: start.y + (end.y - start.y) * ratio,
-        });
-      }
-    }
-    if (!closed) result.push(source[source.length - 1]);
-    return result;
-  }
-
-  function applyPreset(name: "circle" | "heart" | "wave" | "spiral" | "bird") {
+  function applyPreset(name: "circle" | "heart") {
     previousPoints = points;
     drawing = false;
     if (name === "circle") points = makeCircle();
     if (name === "heart") points = makeHeart();
-    if (name === "wave") points = makeWave();
-    if (name === "spiral") points = makeSpiral();
-    if (name === "bird") points = makeBird();
-    closePath = name !== "wave" && name !== "spiral";
+    closePath = true;
   }
 
   function distance(a: Point, b: Point) {
@@ -1230,15 +1166,6 @@
           >
           <button type="button" on:click={() => applyPreset("heart")}
             ><span>♡</span>Heart</button
-          >
-          <button type="button" on:click={() => applyPreset("bird")}
-            ><span>⌁</span>Bird</button
-          >
-          <button type="button" on:click={() => applyPreset("wave")}
-            ><span>∿</span>Wave</button
-          >
-          <button type="button" on:click={() => applyPreset("spiral")}
-            ><span>＠</span>Spiral</button
           >
           <button
             class:active={drawing}
@@ -2538,7 +2465,7 @@
     }
 
     .control-section:last-child .shape-grid {
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(4, 1fr);
     }
 
     .stage-panel {
@@ -2567,7 +2494,7 @@
     }
 
     .control-section:last-child .shape-grid {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
     }
 
     .stage-panel {
