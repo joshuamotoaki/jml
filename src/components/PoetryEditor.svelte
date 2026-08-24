@@ -115,6 +115,7 @@
   let segmenterReady = false;
   let segmenterImageReady = false;
   let segmenterBusy = false;
+  let imageImporting = false;
   let selectionStatus = "Upload an image to begin.";
   let selectionError = "";
   let selectionTool: SelectionTool = "keep";
@@ -240,7 +241,7 @@
   function getTokens(value: string, selectedUnit: Unit) {
     const cleaned = value.replace(/\s+/g, " ").trim() || "word";
     if (selectedUnit === "letter")
-      return Array.from(cleaned.replace(/ /g, " · "));
+      return Array.from(cleaned.replace(/ /g, "·"));
     if (selectedUnit === "word") return cleaned.split(" ").filter(Boolean);
     return value
       .split(/\n+/)
@@ -1946,10 +1947,42 @@
     sendPendingImage();
   }
 
+  function isHeicImage(file: File) {
+    return (
+      /\.hei[cf]$/i.test(file.name) ||
+      [
+        "image/heic",
+        "image/heif",
+        "image/heic-sequence",
+        "image/heif-sequence",
+      ].includes(file.type.toLowerCase())
+    );
+  }
+
+  async function browserReadableImage(file: File) {
+    if (!isHeicImage(file)) return file;
+
+    selectionStatus = "Opening HEIC image…";
+    try {
+      const { default: heic2any } = await import("heic2any");
+      const converted = await heic2any({
+        blob: file,
+        toType: "image/png",
+      });
+      const result = Array.isArray(converted) ? converted[0] : converted;
+      if (!result) throw new Error("No image was found in this HEIC file.");
+      return result;
+    } catch {
+      throw new Error(
+        "This HEIC image could not be opened. Try exporting it as JPEG or PNG.",
+      );
+    }
+  }
+
   async function chooseImage(file: File | undefined) {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      selectionError = "Choose a PNG, JPEG, or WebP image.";
+    if (!file || imageImporting) return;
+    if (!file.type.startsWith("image/") && !isHeicImage(file)) {
+      selectionError = "Choose a PNG, JPEG, WebP, HEIC, or HEIF image.";
       return;
     }
     if (file.size > 20 * 1024 * 1024) {
@@ -1958,26 +1991,33 @@
     }
 
     selectionError = "";
-    selectionMask = undefined;
-    automaticSelectionMask = undefined;
-    automaticSelectionMethod = undefined;
-    selectionMethod = "none";
-    selectionStrokes = [];
-    activeSelectionStroke = [];
-    segmenterWorker?.terminate();
-    segmenterWorker = undefined;
-    segmenterReady = false;
-    segmenterImageReady = false;
-    segmenterBusy = true;
-    imageName = file.name;
-    if (imageUrl) URL.revokeObjectURL(imageUrl);
-    imageUrl = URL.createObjectURL(file);
-    selectionStatus = "Reading the image edge…";
+    imageImporting = true;
+    selectionStatus = isHeicImage(file)
+      ? "Opening HEIC image…"
+      : "Opening image…";
 
     try {
-      const source = await createImageBitmap(file, {
+      const readableImage = await browserReadableImage(file);
+      const source = await createImageBitmap(readableImage, {
         imageOrientation: "from-image",
       });
+
+      selectionMask = undefined;
+      automaticSelectionMask = undefined;
+      automaticSelectionMethod = undefined;
+      selectionMethod = "none";
+      selectionStrokes = [];
+      activeSelectionStroke = [];
+      segmenterWorker?.terminate();
+      segmenterWorker = undefined;
+      segmenterReady = false;
+      segmenterImageReady = false;
+      segmenterBusy = true;
+      imageName = file.name;
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+      imageUrl = URL.createObjectURL(readableImage);
+      selectionStatus = "Reading the image edge…";
+
       const longestSide = Math.max(source.width, source.height);
       const scale = Math.min(1, 1200 / longestSide);
       imageWidth = Math.max(1, Math.round(source.width * scale));
@@ -2018,6 +2058,8 @@
       selectionError =
         error instanceof Error ? error.message : "The image could not be read.";
       segmenterBusy = false;
+    } finally {
+      imageImporting = false;
     }
   }
 
@@ -3300,13 +3342,20 @@
           <button
             class="image-dropzone"
             type="button"
+            disabled={imageImporting}
             on:click={() => imageInputElement.click()}
             on:dragover={(event) => event.preventDefault()}
             on:drop={handleImageDrop}
           >
             <span aria-hidden="true">▧</span>
-            <strong>Choose an image</strong>
-            <small>or drop it here · PNG, JPEG, or WebP</small>
+            <strong
+              >{imageImporting ? "Opening image…" : "Choose an image"}</strong
+            >
+            <small>
+              {imageImporting
+                ? "HEIC images can take a moment"
+                : "or drop it here · PNG, JPEG, WebP, or HEIC"}
+            </small>
           </button>
           {#if selectionError}
             <p class="model-status error">{selectionError}</p>
@@ -3316,14 +3365,16 @@
             <div class="selection-workspace">
               <div class="selection-toolbar">
                 <strong>{imageName}</strong>
-                <button type="button" on:click={() => imageInputElement.click()}
-                  >Replace</button
+                <button
+                  type="button"
+                  disabled={imageImporting}
+                  on:click={() => imageInputElement.click()}>Replace</button
                 >
               </div>
 
               <div class="subject-stage">
                 <div
-                  class:busy={segmenterBusy}
+                  class:busy={segmenterBusy || imageImporting}
                   class="subject-image"
                   style={`aspect-ratio: ${imageWidth || 4} / ${imageHeight || 3}`}
                 >
@@ -3343,7 +3394,7 @@
                     on:pointerup={finishSelectionStroke}
                     on:pointercancel={finishSelectionStroke}
                   ></canvas>
-                  {#if segmenterBusy}
+                  {#if segmenterBusy || imageImporting}
                     <div class="selection-busy" aria-live="polite">
                       <span></span>{selectionStatus}
                     </div>
@@ -3352,7 +3403,7 @@
               </div>
 
               <div class="selection-key">
-                {#if !segmenterBusy}
+                {#if !segmenterBusy && !imageImporting}
                   <span class:error={selectionError}>
                     {selectionError || selectionStatus}
                   </span>
@@ -3479,7 +3530,9 @@
                 <p>Processed only in your browser.</p>
                 <button
                   type="button"
-                  disabled={importedShapePreview.length < 3 || segmenterBusy}
+                  disabled={importedShapePreview.length < 3 ||
+                    segmenterBusy ||
+                    imageImporting}
                   on:click={useImportedShape}>Use this shape →</button
                 >
               </div>
@@ -3491,7 +3544,8 @@
           bind:this={imageInputElement}
           class="visually-hidden"
           type="file"
-          accept="image/png,image/jpeg,image/webp"
+          accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif"
+          disabled={imageImporting}
           on:change={handleImageInput}
         />
       </section>
@@ -4421,6 +4475,11 @@
     background: #ddddd6;
   }
 
+  .image-dropzone:disabled {
+    cursor: progress;
+    opacity: 0.72;
+  }
+
   .image-dropzone > span {
     margin-bottom: 2px;
     font-size: 2rem;
@@ -4679,6 +4738,7 @@
   }
 
   .selection-actions button:disabled,
+  .selection-toolbar button:disabled,
   .selection-confirm button:disabled {
     cursor: default;
     opacity: 0.35;
