@@ -4,7 +4,7 @@
   import { automaticMaskFromPixels } from "../lib/poetry-image-mask";
 
   type Point = { x: number; y: number };
-  type Layout = "outline" | "fill" | "columns";
+  type Layout = "outline" | "fill";
   type Unit = "phrase" | "word" | "letter";
   type Orientation = "follow" | "upright" | "radial";
   type SelectMenu = "orientation" | "font";
@@ -63,7 +63,6 @@
   const layouts: { value: Layout; label: string; mark: string }[] = [
     { value: "outline", label: "Outline", mark: "○" },
     { value: "fill", label: "Fill", mark: "●" },
-    { value: "columns", label: "Columns", mark: "↕" },
   ];
 
   const units: { value: Unit; label: string }[] = [
@@ -1565,39 +1564,6 @@
       Math.max(...source.map((point) => point.y)),
     );
     let index = 0;
-
-    if (selectedLayout === "columns") {
-      const columnGap = size * 1.05 + gap;
-      const rowGap = size * 1.12 + gap * 0.45;
-      let column = 0;
-      for (let x = minX + columnGap / 2; x < maxX; x += columnGap) {
-        const columnPoints: Point[] = [];
-        for (let y = minY + size; y < maxY; y += rowGap) {
-          const point = { x, y };
-          if (!pointInPolygon(point, source)) continue;
-          columnPoints.push(point);
-        }
-        if (column % 2 === 1) columnPoints.reverse();
-        for (const point of columnPoints) {
-          const text = sourceTokens[index % sourceTokens.length];
-          result.push({
-            ...point,
-            text,
-            angle: placementAngle(
-              selectedOrientation,
-              0,
-              point,
-              center,
-              selectedLayout,
-            ),
-            index,
-          });
-          index += 1;
-        }
-        column += 1;
-      }
-      return result;
-    }
 
     const rowGap = size * 1.25 + gap;
     for (let y = minY + size; y < maxY; y += rowGap) {
@@ -3712,7 +3678,7 @@
   .layout-grid,
   .shape-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     border-top: 1px solid rgba(36, 36, 36, 0.5);
     border-left: 1px solid rgba(36, 36, 36, 0.5);
   }
