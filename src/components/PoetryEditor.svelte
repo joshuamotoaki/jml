@@ -2867,8 +2867,8 @@
           </button>
         </div>
         <div class="toggle-row">
-          <label
-            ><input
+          <label class="shape-toggle">
+            <input
               type="checkbox"
               bind:checked={closePath}
               disabled={motionEnabled &&
@@ -2876,11 +2876,15 @@
                 bendStep !== "idle" &&
                 bendStep !== "done"}
               on:change={syncShapeToMotion}
-            /> Close shape</label
-          >
-          <label
-            ><input type="checkbox" bind:checked={showGuide} /> Show guide</label
-          >
+            />
+            <span class="shape-check" aria-hidden="true"></span>
+            <span>Close shape</span>
+          </label>
+          <label class="shape-toggle">
+            <input type="checkbox" bind:checked={showGuide} />
+            <span class="shape-check" aria-hidden="true"></span>
+            <span>Show guide</span>
+          </label>
         </div>
       </section>
 
@@ -3921,20 +3925,79 @@
   .toggle-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 22px;
-    margin-top: 10px;
+    gap: 20px;
+    margin-top: 11px;
+    letter-spacing: 0.045em;
     line-height: 1.2;
   }
 
-  .toggle-row label {
+  .shape-toggle {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 7px;
     cursor: pointer;
+    user-select: none;
   }
 
-  .toggle-row input {
-    accent-color: var(--color-yellow-std);
+  .shape-toggle input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .shape-check {
+    position: relative;
+    display: grid;
+    width: 15px;
+    height: 15px;
+    flex: 0 0 15px;
+    place-items: center;
+    border: 1px solid rgba(36, 36, 36, 0.72);
+    background: rgba(255, 255, 255, 0.22);
+    transition:
+      border-color 120ms ease,
+      background 120ms ease;
+  }
+
+  .shape-check::after {
+    content: "";
+    width: 7px;
+    height: 4px;
+    border-bottom: 1.5px solid var(--color-dark);
+    border-left: 1.5px solid var(--color-dark);
+    opacity: 0;
+    transform: translateY(-1px) rotate(-45deg) scale(0.7);
+    transition:
+      opacity 100ms ease,
+      transform 120ms ease;
+  }
+
+  .shape-toggle:hover .shape-check {
+    border-color: var(--color-dark);
+  }
+
+  .shape-toggle input:checked + .shape-check {
+    border-color: var(--color-dark);
+    background: var(--color-yellow-std);
+  }
+
+  .shape-toggle input:checked + .shape-check::after {
+    opacity: 1;
+    transform: translateY(-1px) rotate(-45deg) scale(1);
+  }
+
+  .shape-toggle input:focus-visible + .shape-check {
+    outline: 2px solid var(--color-yellow-std);
+    outline-offset: 2px;
+  }
+
+  .shape-toggle:has(input:disabled) {
+    cursor: default;
+    opacity: 0.38;
   }
 
   .motion-intro,
