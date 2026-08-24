@@ -30,6 +30,19 @@ This is Joshua Motoaki Lau's personal website built with Astro. It's a visually 
 - **Styling**: Custom design system in `global.css` with semantic color variables and typography scales
 - **Typography**: Mixed font system supporting both Latin and Japanese characters (`.zh` class)
 
+### Concrete Poetry editor (`/poetry`)
+
+A Svelte 5 (runes) motion-graphics editor for text-on-shape poems:
+
+- `src/lib/poetry/` — pure engine modules: `types.ts` (document model: keyframes/poses, motion settings), `geometry.ts` (paths, resampling, cyclic matching), `layout.ts` (token placement on outline/fill), `motion.ts` (segment plans, N-keyframe interpolation, stagger, enter/exit), `easing.ts`, `tools.ts` (translate/scale/rotate/bend/warp), `export.ts` (static + baked-animation SVG markup)
+- `src/lib/poetry/editorState.svelte.ts` — shared runes state class: document, selection, playback loop, undo/redo history, localStorage autosave, segment-plan cache
+- `src/components/PoetryEditor.svelte` — shell: header/exports, sidebar (words/build/colors), keyboard shortcuts
+- `src/components/poetry/Stage.svelte` — canvas: direct manipulation (move/scale/rotate box, draw, bend lasso+pivot, sculpt brush), onion-skin ghosts, floating tool rail
+- `src/components/poetry/Timeline.svelte` — playback bar: scrub, draggable pose diamonds, per-segment easing popover, loop modes, flow (stagger/enter-style/trigger) popover
+- `src/components/poetry/ImageShapeTool.svelte` — image-to-shape modal (MediaPipe segmenter worker + d3-contour)
+
+The motion model is pose-to-pose: a document always has ≥1 keyframe; ≥2 keyframes means animated. Bend/warp are shape tools that edit a pose, not motion types.
+
 ### Design System
 
 - Color palette with semantic names (`red-std`, `orange-std`, etc.)
