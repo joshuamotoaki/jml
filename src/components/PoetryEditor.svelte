@@ -49,7 +49,7 @@
     xAxis: Point;
     yAxis: Point;
   };
-  type SelectionTool = "keep" | "remove" | "lasso";
+  type SelectionTool = "keep" | "remove";
   type SelectionMethod = "none" | "alpha" | "background" | "ai";
   type SelectionStroke = {
     brushMode: 1 | 2 | 3;
@@ -2069,8 +2069,7 @@
       selectionCanvasElement.releasePointerCapture(event.pointerId);
     }
     if (!activeSelectionStroke.length) return;
-    const brushMode =
-      selectionTool === "keep" ? 1 : selectionTool === "remove" ? 2 : 3;
+    const brushMode = selectionTool === "keep" ? 1 : 2;
     selectionStrokes = [
       ...selectionStrokes,
       { brushMode, point: activeSelectionStroke, isCompleted: true },
@@ -2187,8 +2186,7 @@
     if (activeSelectionStroke.length) {
       drawStroke(
         {
-          brushMode:
-            selectionTool === "keep" ? 1 : selectionTool === "remove" ? 2 : 3,
+          brushMode: selectionTool === "keep" ? 1 : 2,
           point: activeSelectionStroke,
           isCompleted: false,
         },
@@ -3281,20 +3279,20 @@
     >
       <section
         class="image-tool"
+        class:upload-only={!imageUrl}
         role="dialog"
         aria-modal="true"
         aria-labelledby="image-tool-title"
         tabindex="-1"
       >
         <header class="image-tool-header">
-          <div>
-            <span>Shape study</span>
-            <h2 id="image-tool-title">Make a shape from an image</h2>
-          </div>
+          <h2 id="image-tool-title">
+            {imageUrl ? "Select a subject" : "Image to shape"}
+          </h2>
           <button
             type="button"
             on:click={closeImageTool}
-            aria-label="Close image shape tool">Close ×</button
+            aria-label="Close image shape tool">×</button
           >
         </header>
 
@@ -3306,25 +3304,20 @@
             on:dragover={(event) => event.preventDefault()}
             on:drop={handleImageDrop}
           >
-            <span>▧</span>
-            <strong>Drop an image here</strong>
-            <small>or choose a PNG, JPEG, or WebP · up to 20 MB</small>
+            <span aria-hidden="true">▧</span>
+            <strong>Choose an image</strong>
+            <small>or drop it here · PNG, JPEG, or WebP</small>
           </button>
-          <p class="model-status" class:error={selectionError}>
-            {selectionError || selectionStatus}
-          </p>
+          {#if selectionError}
+            <p class="model-status error">{selectionError}</p>
+          {/if}
         {:else}
           <div class="image-tool-body">
             <div class="selection-workspace">
               <div class="selection-toolbar">
-                <div>
-                  <strong>{imageName}</strong>
-                  <span class:error={selectionError}>
-                    {selectionError || selectionStatus}
-                  </span>
-                </div>
+                <strong>{imageName}</strong>
                 <button type="button" on:click={() => imageInputElement.click()}
-                  >Replace image</button
+                  >Replace</button
                 >
               </div>
 
@@ -3358,40 +3351,29 @@
                 </div>
               </div>
 
-              <div class="selection-key" aria-hidden="true">
+              <div class="selection-key">
+                {#if !segmenterBusy}
+                  <span class:error={selectionError}>
+                    {selectionError || selectionStatus}
+                  </span>
+                {/if}
                 {#if selectionMethod === "alpha"}
-                  <span class="exact-edge-label">Exact transparency edge</span>
+                  <span class="exact-edge-label">Transparency edge</span>
                 {:else if selectionMethod === "background"}
-                  <span class="exact-edge-label">Flat background edge</span>
-                {:else}
-                  <span class="keep-dot"></span>Keep
-                  <span class="remove-dot"></span>Remove
-                  <span class="lasso-dot"></span>Lasso
+                  <span class="exact-edge-label">Background edge</span>
                 {/if}
               </div>
             </div>
 
             <aside class="selection-controls">
-              <section>
-                <div class="import-section-heading">
-                  <span>01</span>
-                  <h3>Select</h3>
-                </div>
+              <section class="selection-step">
+                <h3>Selection</h3>
                 {#if selectionMethod === "alpha"}
-                  <p>
-                    This PNG already has transparency, so its real pixel edge is
-                    used directly. No AI guess is needed.
-                  </p>
+                  <p>The transparent edge is ready to use.</p>
                 {:else if selectionMethod === "background"}
-                  <p>
-                    The background is flat enough to remove directly, preserving
-                    the artwork’s crisp edge.
-                  </p>
+                  <p>The background was removed automatically.</p>
                 {:else}
-                  <p>
-                    Click or paint over the subject. Add another stroke to
-                    correct the selection.
-                  </p>
+                  <p>Paint the subject. Use remove to correct it.</p>
                 {/if}
 
                 {#if segmenterImageReady}
@@ -3401,7 +3383,7 @@
                       type="button"
                       on:click={() => (selectionTool = "keep")}
                     >
-                      <span class="keep-dot"></span>Keep
+                      <span class="keep-dot"></span>Add
                     </button>
                     <button
                       class:active={selectionTool === "remove"}
@@ -3410,24 +3392,17 @@
                     >
                       <span class="remove-dot"></span>Remove
                     </button>
-                    <button
-                      class:active={selectionTool === "lasso"}
-                      type="button"
-                      on:click={() => (selectionTool = "lasso")}
-                    >
-                      <span class="lasso-dot"></span>Lasso
-                    </button>
                   </div>
                   <div class="selection-actions">
                     <button
                       type="button"
                       disabled={!selectionStrokes.length || segmenterBusy}
-                      on:click={undoSelectionStroke}>Undo mark</button
+                      on:click={undoSelectionStroke}>Undo</button
                     >
                     <button
                       type="button"
                       disabled={!selectionStrokes.length || segmenterBusy}
-                      on:click={resetSelection}>Start over</button
+                      on:click={resetSelection}>Reset</button
                     >
                   </div>
                 {:else if selectionMethod === "alpha" || selectionMethod === "background"}
@@ -3437,75 +3412,71 @@
                     disabled={segmenterBusy}
                     on:click={startAiRefinement}
                   >
-                    Refine with AI brush
+                    Edit selection
                   </button>
                 {/if}
               </section>
 
-              <section>
-                <div class="import-section-heading">
-                  <span>02</span>
-                  <h3>Refine</h3>
-                </div>
-                <label class="import-range">
-                  <span
-                    >Edge <output
-                      >{Math.round(selectionThreshold * 100)}%</output
-                    ></span
-                  >
-                  <input
-                    type="range"
-                    min="0.2"
-                    max="0.8"
-                    step="0.02"
-                    bind:value={selectionThreshold}
-                  />
-                </label>
-                <label class="import-range">
-                  <span>Detail <output>{selectionDetail}</output></span>
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    step="1"
-                    bind:value={selectionDetail}
-                  />
-                </label>
-                <label class="import-range">
-                  <span>Smooth <output>{selectionSmoothness}</output></span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="10"
-                    step="1"
-                    bind:value={selectionSmoothness}
-                  />
-                </label>
-
-                <div class="shape-result" class:empty={!importedShapePath}>
-                  {#if importedShapePath}
-                    <svg
-                      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-                      aria-label="Extracted shape preview"
+              <details class="refine-details">
+                <summary>Refine outline</summary>
+                <div class="refine-sliders">
+                  <label class="import-range">
+                    <span
+                      >Edge <output
+                        >{Math.round(selectionThreshold * 100)}%</output
+                      ></span
                     >
-                      <path
-                        d={importedShapePath}
-                        fill="rgba(36, 36, 36, 0.08)"
-                        stroke="currentColor"
-                        stroke-width="5"
-                      />
-                    </svg>
-                  {:else}
-                    <span>Your extracted silhouette will appear here.</span>
-                  {/if}
+                    <input
+                      type="range"
+                      min="0.2"
+                      max="0.8"
+                      step="0.02"
+                      bind:value={selectionThreshold}
+                    />
+                  </label>
+                  <label class="import-range">
+                    <span>Detail <output>{selectionDetail}</output></span>
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      bind:value={selectionDetail}
+                    />
+                  </label>
+                  <label class="import-range">
+                    <span>Smooth <output>{selectionSmoothness}</output></span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="10"
+                      step="1"
+                      bind:value={selectionSmoothness}
+                    />
+                  </label>
                 </div>
-              </section>
+              </details>
+
+              <div class="shape-result" class:empty={!importedShapePath}>
+                {#if importedShapePath}
+                  <svg
+                    viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+                    aria-label="Extracted shape preview"
+                  >
+                    <path
+                      d={importedShapePath}
+                      fill="rgba(36, 36, 36, 0.08)"
+                      stroke="currentColor"
+                      stroke-width="5"
+                    />
+                  </svg>
+                {:else}
+                  <span>Shape preview</span>
+                {/if}
+              </div>
 
               <div class="selection-confirm">
-                <p>
-                  The image stays in your browser. Only the outer silhouette
-                  becomes part of the poem.
-                </p>
+                <p>Processed only in your browser.</p>
                 <button
                   type="button"
                   disabled={importedShapePreview.length < 3 || segmenterBusy}
@@ -4350,43 +4321,40 @@
     z-index: 50;
     display: grid;
     place-items: center;
-    padding: 16px;
+    padding: 20px;
     background: rgba(36, 36, 36, 0.72);
   }
 
   .image-tool {
     position: relative;
-    width: min(1120px, calc(100vw - 32px));
-    height: min(780px, calc(100vh - 32px));
+    width: min(900px, calc(100vw - 40px));
+    height: min(620px, calc(100vh - 40px));
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
     overflow: hidden;
     border: 1px solid var(--color-dark);
     background: var(--color-light);
-    box-shadow: 9px 9px 0 rgba(36, 36, 36, 0.45);
+    box-shadow: 7px 7px 0 rgba(36, 36, 36, 0.4);
+  }
+
+  .image-tool.upload-only {
+    width: min(500px, calc(100vw - 40px));
+    height: auto;
   }
 
   .image-tool-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
-    min-height: 68px;
-    padding: 9px 13px 9px 16px;
+    gap: 16px;
+    min-height: 50px;
+    padding: 7px 9px 7px 13px;
     border-bottom: 1px solid var(--color-dark);
   }
 
-  .image-tool-header > div {
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-  }
-
-  .image-tool-header span,
   .model-status,
   .selection-toolbar,
   .selection-key,
-  .import-section-heading > span,
   .import-range > span,
   .selection-confirm p {
     font-family: var(--font-pp-editorial-sans);
@@ -4395,15 +4363,11 @@
     text-transform: uppercase;
   }
 
-  .image-tool-header span {
-    opacity: 0.55;
-  }
-
   .image-tool-header h2 {
     margin: 0;
-    font-size: clamp(1.3rem, 2.5vw, 2rem);
+    font-size: 1.25rem;
     font-weight: 400;
-    letter-spacing: -0.035em;
+    letter-spacing: -0.025em;
   }
 
   .image-tool-header button,
@@ -4420,6 +4384,15 @@
     text-transform: uppercase;
   }
 
+  .image-tool-header button {
+    width: 33px;
+    min-height: 33px;
+    padding: 0;
+    font-family: inherit;
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+
   .image-tool-header button:hover,
   .selection-toolbar button:hover,
   .selection-actions button:hover,
@@ -4430,41 +4403,45 @@
   }
 
   .image-dropzone {
-    width: calc(100% - 36px);
-    height: calc(100% - 36px);
-    align-self: center;
-    justify-self: center;
+    width: calc(100% - 40px);
+    min-height: 190px;
+    margin: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     border: 1px dashed var(--color-dark);
-    background: #deded8;
+    background: #e5e5df;
     color: var(--color-dark);
     cursor: pointer;
   }
 
+  .image-dropzone:hover {
+    background: #ddddd6;
+  }
+
   .image-dropzone > span {
-    font-size: 4rem;
+    margin-bottom: 2px;
+    font-size: 2rem;
     line-height: 1;
   }
 
   .image-dropzone strong {
-    font-size: clamp(1.35rem, 3vw, 2.25rem);
+    font-size: 1.25rem;
     font-weight: 400;
   }
 
   .image-dropzone small {
     font-family: var(--font-pp-editorial-sans);
-    font-size: 0.72rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.045em;
     text-transform: uppercase;
   }
 
   .model-status {
-    position: absolute;
-    bottom: 32px;
-    margin: 0;
+    margin: -8px 20px 16px;
+    text-align: center;
   }
 
   .error {
@@ -4474,7 +4451,7 @@
   .image-tool-body {
     min-height: 0;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 304px;
+    grid-template-columns: minmax(0, 1fr) 258px;
   }
 
   .selection-workspace {
@@ -4482,7 +4459,7 @@
     min-height: 0;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
-    padding: 11px 13px 9px;
+    padding: 10px 11px 8px;
     background: #d7d7d1;
   }
 
@@ -4491,29 +4468,16 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding-bottom: 9px;
-  }
-
-  .selection-toolbar > div {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .selection-toolbar strong,
-  .selection-toolbar span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    min-height: 31px;
+    padding-bottom: 8px;
   }
 
   .selection-toolbar strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-weight: 500;
-  }
-
-  .selection-toolbar span {
-    opacity: 0.65;
   }
 
   .subject-stage {
@@ -4596,24 +4560,29 @@
   .selection-key {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 6px;
-    min-height: 27px;
+    min-height: 25px;
+    padding-top: 3px;
   }
 
-  .selection-key span:not(:first-child) {
-    margin-left: 8px;
+  .selection-key > span:first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.62;
   }
 
   .exact-edge-label {
-    padding: 3px 6px;
+    flex: 0 0 auto;
+    padding: 2px 5px;
     border: 1px solid rgba(36, 36, 36, 0.5);
     background: var(--color-light);
   }
 
   .keep-dot,
-  .remove-dot,
-  .lasso-dot {
+  .remove-dot {
     width: 8px;
     height: 8px;
     display: inline-block;
@@ -4626,10 +4595,6 @@
     background: #d34b42;
   }
 
-  .lasso-dot {
-    background: #315fb4;
-  }
-
   .selection-controls {
     min-height: 0;
     display: flex;
@@ -4638,43 +4603,32 @@
     border-left: 1px solid var(--color-dark);
   }
 
-  .selection-controls > section {
-    padding: 12px 14px 14px;
+  .selection-step {
+    padding: 14px;
     border-bottom: 1px solid rgba(36, 36, 36, 0.4);
   }
 
-  .import-section-heading {
-    display: grid;
-    grid-template-columns: 28px 1fr;
-    align-items: baseline;
-    margin-bottom: 5px;
-  }
-
-  .import-section-heading > span {
-    opacity: 0.55;
-  }
-
-  .import-section-heading h3 {
-    margin: 0;
-    font-size: 1.15rem;
+  .selection-step h3 {
+    margin: 0 0 3px;
+    font-size: 1.05rem;
     font-weight: 400;
   }
 
-  .selection-controls section > p {
-    margin: 0 0 9px 28px;
-    font-size: 0.84rem;
-    line-height: 1.25;
+  .selection-step > p {
+    margin: 0 0 10px;
+    font-size: 0.76rem;
+    line-height: 1.3;
+    opacity: 0.7;
   }
 
   .selection-tools {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    margin-left: 28px;
+    grid-template-columns: repeat(2, 1fr);
     border: 1px solid rgba(36, 36, 36, 0.55);
   }
 
   .selection-tools button {
-    min-height: 32px;
+    min-height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -4684,7 +4638,7 @@
     background: transparent;
     cursor: pointer;
     font-family: var(--font-pp-editorial-sans);
-    font-size: 0.67rem;
+    font-size: 0.62rem;
     text-transform: uppercase;
   }
 
@@ -4700,7 +4654,7 @@
   .selection-actions {
     display: flex;
     gap: 6px;
-    margin: 8px 0 0 28px;
+    margin-top: 7px;
   }
 
   .selection-actions button {
@@ -4708,9 +4662,9 @@
   }
 
   .ai-refine-button {
-    width: calc(100% - 28px);
+    width: 100%;
     min-height: 32px;
-    margin: 0 0 0 28px;
+    margin: 0;
     border: 1px solid var(--color-dark);
     background: transparent;
     cursor: pointer;
@@ -4732,9 +4686,45 @@
     color: var(--color-dark);
   }
 
+  .refine-details {
+    border-bottom: 1px solid rgba(36, 36, 36, 0.4);
+  }
+
+  .refine-details summary {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--font-pp-editorial-sans);
+    font-size: 0.68rem;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+  }
+
+  .refine-details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .refine-details summary::after {
+    content: "+";
+    font-family: inherit;
+    font-size: 1rem;
+  }
+
+  .refine-details[open] summary::after {
+    content: "−";
+  }
+
+  .refine-sliders {
+    padding: 0 14px 12px;
+  }
+
   .import-range {
     display: block;
-    margin: 7px 0 0 28px;
+    margin-top: 7px;
   }
 
   .import-range > span {
@@ -4744,11 +4734,12 @@
   }
 
   .shape-result {
-    height: 124px;
+    min-height: 105px;
+    flex: 1 1 105px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 9px 0 0 28px;
+    margin: 14px;
     border: 1px solid rgba(36, 36, 36, 0.55);
     background: #e8e8e3;
   }
@@ -4763,18 +4754,17 @@
   .shape-result > span {
     max-width: 170px;
     text-align: center;
-    font-size: 0.78rem;
+    font-size: 0.74rem;
     line-height: 1.25;
     opacity: 0.55;
   }
 
   .selection-confirm {
-    margin-top: auto;
-    padding: 11px 14px 13px;
+    padding: 0 14px 14px;
   }
 
   .selection-confirm p {
-    margin: 0 0 8px;
+    margin: 0 0 7px;
     line-height: 1.35;
     opacity: 0.62;
   }
@@ -4906,14 +4896,6 @@
       height: 100vh;
       border: 0;
       box-shadow: none;
-    }
-
-    .image-tool-header > div {
-      display: block;
-    }
-
-    .image-tool-header span {
-      display: none;
     }
 
     .selection-workspace {
