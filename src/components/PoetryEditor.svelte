@@ -2694,7 +2694,6 @@
       </div>
       <section class="control-section words-section">
         <div class="section-heading">
-          <span>01</span>
           <h2>Words</h2>
           <small
             >{characterCount}
@@ -2707,7 +2706,6 @@
 
       <section class="control-section">
         <div class="section-heading">
-          <span>02</span>
           <h2>Build</h2>
         </div>
         <div class="layout-grid" aria-label="Text placement">
@@ -2856,7 +2854,6 @@
 
       <section class="control-section shape-section">
         <div class="section-heading">
-          <span>03</span>
           <h2>Shape</h2>
         </div>
         <div class="shape-grid">
@@ -2923,7 +2920,6 @@
 
       <section class="control-section motion-section">
         <div class="section-heading">
-          <span>04</span>
           <h2>Motion</h2>
           {#if motionEnabled}
             <small>
@@ -3665,12 +3661,11 @@
 
   .section-heading {
     display: grid;
-    grid-template-columns: 27px 1fr auto;
+    grid-template-columns: 1fr auto;
     align-items: baseline;
     margin-bottom: 7px;
   }
 
-  .section-heading > span,
   .section-heading small,
   .control-label,
   .select-label,
@@ -3682,7 +3677,6 @@
     text-transform: uppercase;
   }
 
-  .section-heading > span,
   .section-heading small {
     opacity: 0.55;
   }
