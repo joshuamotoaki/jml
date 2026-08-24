@@ -1,10 +1,5 @@
 ---
 // Header.astro
-export interface Props {
-  currentPage?: string;
-}
-
-const { currentPage } = Astro.props;
 ---
 
 <header class="absolute top-0 left-0 w-full z-50">
@@ -15,15 +10,6 @@ const { currentPage } = Astro.props;
       <span> JML </span>
     </a>
     <div class="flex items-center gap-5">
-      <a
-        class:list={[
-          "nav-button text-h4",
-          { "home-poetry-button": currentPage === "home" },
-        ]}
-        href="/poetry/"
-      >
-        Poetry
-      </a>
       <a class="nav-button text-h4" href="/blog/">Blog</a>
       <button
         class="nav-button text-h4 cursor-pointer border-0 bg-transparent p-0"
@@ -44,13 +30,6 @@ const { currentPage } = Astro.props;
     <div
       class="top-0 right-0 flex flex-col mt-2 justify-between w-12 h-fit gap-7"
     >
-      <a
-        class:list={[
-          "nav-button text-h5 transform rotate-90",
-          { "home-poetry-button": currentPage === "home" },
-        ]}
-        href="/poetry/">Poetry</a
-      >
       <a class="nav-button text-h5 transform rotate-90" href="/blog/">Blog</a>
       <button
         class="nav-button text-h5 cursor-pointer transform rotate-90 border-0 bg-transparent p-0"
@@ -62,27 +41,3 @@ const { currentPage } = Astro.props;
     </div>
   </nav>
 </header>
-
-<style>
-  .home-poetry-button {
-    border: 1px solid var(--color-dark);
-    padding: 0.08em 0.3em 0.14em;
-    background: var(--color-yellow-std);
-    box-shadow: 4px 4px 0 var(--color-dark);
-    color: var(--color-dark);
-    line-height: 0.95;
-    text-decoration: none;
-  }
-
-  .home-poetry-button:hover {
-    background: var(--color-orange-std);
-    color: var(--color-dark);
-  }
-
-  @media (max-width: 767px) {
-    .home-poetry-button {
-      padding: 0.08em 0.22em 0.12em;
-      box-shadow: 3px 3px 0 var(--color-dark);
-    }
-  }
-</style>
