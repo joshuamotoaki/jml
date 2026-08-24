@@ -8,12 +8,23 @@
   type Unit = "phrase" | "word" | "letter";
   type Orientation = "follow" | "upright" | "radial";
   type SelectMenu = "orientation" | "font";
-  type Placement = Point & { text: string; angle: number; index: number };
+  type Placement = Point & {
+    text: string;
+    angle: number;
+    index: number;
+    opacity?: number;
+    scale?: number;
+    pathProgress?: number;
+    pathOffset?: number;
+    reveal?: number;
+    revealEdge?: "start" | "end";
+  };
   type MotionType = "morph" | "bend";
   type MotionPoseName = "start" | "end";
   type MotionFeel = "smooth" | "playful" | "snappy";
   type LetterMotion = "attached" | "ripple";
   type MotionTrigger = "automatic" | "hover";
+  type MotionCountMode = "fit" | "enter-exit";
   type MotionPose = { points: Point[]; closed: boolean };
   type MotionPlan = {
     startShape: Point[];
@@ -21,8 +32,12 @@
     startClosed: boolean;
     endClosed: boolean;
     layout: Layout;
+    orientation: Orientation;
     size: number;
     gap: number;
+    countMode: MotionCountMode;
+    startCapacity: number;
+    endCapacity: number;
     startPlacements: Placement[];
     endPlacements: Placement[];
   };
@@ -124,6 +139,7 @@
   let motionFeel: MotionFeel = "smooth";
   let letterMotion: LetterMotion = "attached";
   let motionTrigger: MotionTrigger = "automatic";
+  let motionCountMode: MotionCountMode = "fit";
   let motionDuration = 2.4;
   let motionLoop = true;
   let motionProgress = 0;
@@ -155,24 +171,34 @@
   $: pathData = pointsToPath(points, closePath);
   $: motionPlan = motionEnabled
     ? buildMotionPlan(
-        motionStartPose,
-        motionEndPose,
+        editingMotionPose === "start"
+          ? { points, closed: closePath }
+          : motionStartPose,
+        editingMotionPose === "end"
+          ? { points, closed: closePath }
+          : motionEndPose,
         tokens,
         layout,
         orientation,
         fontSize,
         spacing,
         motionType,
+        motionCountMode,
       )
     : undefined;
   $: renderedPlacements =
-    motionPreviewing && motionPlan
-      ? interpolateMotionPlacements(
-          motionPlan,
-          motionProgress,
-          motionFeel,
-          letterMotion,
-        )
+    motionPlan && motionEnabled
+      ? motionPreviewing
+        ? interpolateMotionPlacements(
+            motionPlan,
+            motionProgress,
+            motionFeel,
+            letterMotion,
+          )
+        : (editingMotionPose === "start"
+            ? motionPlan.startPlacements
+            : motionPlan.endPlacements
+          ).map((placement) => ({ ...placement }))
       : placements;
   $: renderedShapePoints =
     motionPreviewing && motionPlan
@@ -230,6 +256,23 @@
           ? "word"
           : "letter";
     return `${count} ${label}${count === 1 ? "" : "s"}`;
+  }
+
+  function motionCapacityMessage(plan: MotionPlan) {
+    if (plan.startCapacity === plan.endCapacity) return "";
+    if (plan.countMode === "enter-exit") {
+      return `Pose A: ${placementCountLabel(plan.startCapacity, unit)} · Pose B: ${placementCountLabel(plan.endCapacity, unit)}. Surplus pieces travel through the outline’s end.`;
+    }
+    const limitingPose =
+      plan.startCapacity < plan.endCapacity ? "Pose A" : "Pose B";
+    return `${limitingPose} limits this motion to ${placementCountLabel(Math.min(plan.startCapacity, plan.endCapacity), unit)}.`;
+  }
+
+  function motionPoseCount(plan: MotionPlan, pose: MotionPoseName) {
+    if (plan.countMode === "fit") {
+      return Math.min(plan.startCapacity, plan.endCapacity);
+    }
+    return pose === "start" ? plan.startCapacity : plan.endCapacity;
   }
 
   function selectOptions(menu: SelectMenu) {
@@ -446,6 +489,16 @@
   function scrubMotion(value: number) {
     pauseMotion();
     motionProgress = clampProgress(value);
+  }
+
+  function setMotionCountMode(mode: MotionCountMode) {
+    stopMotionPlayback();
+    motionCountMode = mode;
+    announce(
+      mode === "fit"
+        ? "Both poses now use one shared text count"
+        : "Surplus text will travel through the outline’s end",
+    );
   }
 
   function selectMotionPose(name: MotionPoseName) {
@@ -701,6 +754,105 @@
     }));
   }
 
+  function evenlySpacedPlacementIndexes(length: number, count: number) {
+    if (count >= length) return Array.from({ length }, (_, index) => index);
+    if (count <= 1) return length ? [0] : [];
+    return Array.from({ length: count }, (_, index) =>
+      Math.round((index * (length - 1)) / (count - 1)),
+    );
+  }
+
+  function pathProgressForPoint(
+    source: Point[],
+    closed: boolean,
+    target: Point,
+  ) {
+    const segments = getSegments(source, closed);
+    if (!segments.length) return 0;
+    const total =
+      segments[segments.length - 1].offset +
+      segments[segments.length - 1].length;
+    let closestProgress = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+    for (const segment of segments) {
+      const dx = segment.end.x - segment.start.x;
+      const dy = segment.end.y - segment.start.y;
+      const squaredLength = dx * dx + dy * dy;
+      const ratio = Math.max(
+        0,
+        Math.min(
+          1,
+          ((target.x - segment.start.x) * dx +
+            (target.y - segment.start.y) * dy) /
+            squaredLength,
+        ),
+      );
+      const point = {
+        x: segment.start.x + dx * ratio,
+        y: segment.start.y + dy * ratio,
+      };
+      const squaredDistance =
+        (point.x - target.x) ** 2 + (point.y - target.y) ** 2;
+      if (squaredDistance < closestDistance) {
+        closestDistance = squaredDistance;
+        closestProgress = (segment.offset + segment.length * ratio) / total;
+      }
+    }
+    return closestProgress;
+  }
+
+  function pointOnNormalizedPath(
+    source: Point[],
+    closed: boolean,
+    progress: number,
+  ) {
+    const segments = getSegments(source, closed);
+    const total = segments.length
+      ? segments[segments.length - 1].offset +
+        segments[segments.length - 1].length
+      : 0;
+    return pointOnPath(segments, total * clampProgress(progress));
+  }
+
+  function queuedPlacement(
+    shape: Point[],
+    closed: boolean,
+    template: Placement,
+    progress: number,
+    offset: number,
+    selectedOrientation: Orientation,
+    selectedLayout: Layout,
+  ): Placement {
+    const pathPoint = pointOnNormalizedPath(shape, closed, progress);
+    const radians = pathPoint.angle * (Math.PI / 180);
+    const point = {
+      x: pathPoint.point.x + Math.cos(radians) * offset,
+      y: pathPoint.point.y + Math.sin(radians) * offset,
+    };
+    return {
+      ...template,
+      ...point,
+      angle: placementAngle(
+        selectedOrientation,
+        pathPoint.angle,
+        point,
+        centerOf(shape),
+        selectedLayout,
+      ),
+      opacity: 1,
+      scale: 1,
+      pathProgress: progress,
+      pathOffset: offset,
+    };
+  }
+
+  function visiblePlacementCount(source: Placement[]) {
+    return source.reduce(
+      (count, placement) => count + ((placement.opacity ?? 1) > 0.5 ? 1 : 0),
+      0,
+    );
+  }
+
   function spatiallyMatchPlacements(start: Placement[], end: Placement[]) {
     if (!start.length || start.length !== end.length) return end;
     const hilbertOrder = 1024;
@@ -750,6 +902,8 @@
     return matched;
   }
 
+  // Every plan uses one stable roster. Enter/exit keeps the larger roster and
+  // gives each surplus piece a full-size endpoint beyond its nearest edge.
   function buildMotionPlan(
     start: MotionPose,
     end: MotionPose,
@@ -759,6 +913,7 @@
     size: number,
     gap: number,
     motionKind: MotionType,
+    countMode: MotionCountMode,
   ): MotionPlan | undefined {
     if (
       start.points.length < 2 ||
@@ -784,12 +939,22 @@
         startClosed: start.closed,
         endClosed: end.closed,
         layout: selectedLayout,
+        orientation: selectedOrientation,
         size,
         gap,
+        countMode,
+        startCapacity: staticPlacements.length,
+        endCapacity: staticPlacements.length,
         startPlacements: staticPlacements.map((placement) => ({
           ...placement,
+          opacity: 1,
+          scale: 1,
         })),
-        endPlacements: staticPlacements.map((placement) => ({ ...placement })),
+        endPlacements: staticPlacements.map((placement) => ({
+          ...placement,
+          opacity: 1,
+          scale: 1,
+        })),
       };
     }
     const { startShape, endShape } = alignedMotionShapes(
@@ -817,51 +982,224 @@
     );
     const count = Math.min(rawStart.length, rawEnd.length);
     if (!count) return undefined;
+    const followContour =
+      selectedLayout === "outline" && start.closed === end.closed;
 
     let startPlacements: Placement[];
     let endPlacements: Placement[];
-    if (selectedLayout === "outline") {
-      if (rawStart.length <= rawEnd.length) {
-        startPlacements = rawStart.map((placement, index) => ({
-          ...placement,
-          index,
-        }));
-        endPlacements = samplePlacementsEvenly(rawEnd, count).map(
-          (placement, index) => ({
+    if (countMode === "fit" || rawStart.length === rawEnd.length) {
+      if (selectedLayout === "outline") {
+        if (rawStart.length <= rawEnd.length) {
+          startPlacements = rawStart.map((placement, index) => ({
             ...placement,
-            text: startPlacements[index].text,
             index,
-          }),
-        );
+            opacity: 1,
+            scale: 1,
+          }));
+          endPlacements = samplePlacementsEvenly(rawEnd, count).map(
+            (placement, index) => ({
+              ...placement,
+              text: startPlacements[index].text,
+              index,
+              opacity: 1,
+              scale: 1,
+            }),
+          );
+        } else {
+          endPlacements = rawEnd.map((placement, index) => ({
+            ...placement,
+            index,
+            opacity: 1,
+            scale: 1,
+          }));
+          startPlacements = samplePlacementsEvenly(rawStart, count).map(
+            (placement, index) => ({
+              ...placement,
+              text: endPlacements[index].text,
+              index,
+              opacity: 1,
+              scale: 1,
+            }),
+          );
+        }
       } else {
-        endPlacements = rawEnd.map((placement, index) => ({
-          ...placement,
-          index,
-        }));
         startPlacements = samplePlacementsEvenly(rawStart, count).map(
           (placement, index) => ({
             ...placement,
-            text: endPlacements[index].text,
+            text: sourceTokens[index % sourceTokens.length],
             index,
+            opacity: 1,
+            scale: 1,
           }),
         );
+        const sampledEnd = samplePlacementsEvenly(rawEnd, count).map(
+          (placement, index) => ({
+            ...placement,
+            text: sourceTokens[index % sourceTokens.length],
+            index,
+            opacity: 1,
+            scale: 1,
+          }),
+        );
+        endPlacements = spatiallyMatchPlacements(startPlacements, sampledEnd);
       }
+    } else if (rawStart.length < rawEnd.length) {
+      const selectedEndIndexes = evenlySpacedPlacementIndexes(
+        rawEnd.length,
+        count,
+      );
+      const selectedEnd = selectedEndIndexes.map((index) => rawEnd[index]);
+      startPlacements = rawStart.map((placement, index) => ({
+        ...placement,
+        index,
+        opacity: 1,
+        scale: 1,
+      }));
+      endPlacements = (
+        selectedLayout === "outline"
+          ? selectedEnd
+          : spatiallyMatchPlacements(startPlacements, selectedEnd)
+      ).map((placement, index) => ({
+        ...placement,
+        text: startPlacements[index].text,
+        index,
+        opacity: 1,
+        scale: 1,
+      }));
+
+      const selected = new Set(selectedEndIndexes);
+      const extraEndPlacements = rawEnd
+        .map((placement, rawIndex) => ({
+          placement,
+          rawIndex,
+          progress: pathProgressForPoint(endShape, end.closed, placement),
+        }))
+        .filter(({ rawIndex }) => !selected.has(rawIndex));
+      if (followContour) {
+        extraEndPlacements.sort((a, b) =>
+          start.closed ? a.progress - b.progress : b.progress - a.progress,
+        );
+      }
+      let queueDistance = size + gap;
+      extraEndPlacements.forEach(({ placement, progress }) => {
+        const index = startPlacements.length;
+        const text = placement.text;
+        const width = tokenWidth(text, size);
+        queueDistance += width / 2;
+        const queueProgress = start.closed ? 0 : 1;
+        const queueOffset = (start.closed ? -1 : 1) * queueDistance;
+        const revealEdge = start.closed ? "end" : "start";
+        const queued = queuedPlacement(
+          startShape,
+          start.closed,
+          placement,
+          queueProgress,
+          queueOffset,
+          selectedOrientation,
+          selectedLayout,
+        );
+        startPlacements.push({
+          ...queued,
+          text,
+          index,
+          opacity: 1,
+          scale: 1,
+          pathProgress: followContour ? queueProgress : undefined,
+          pathOffset: followContour ? queueOffset : undefined,
+          reveal: 0,
+          revealEdge,
+        });
+        endPlacements.push({
+          ...placement,
+          text,
+          index,
+          opacity: 1,
+          scale: 1,
+          pathProgress: followContour ? progress : undefined,
+          pathOffset: followContour ? 0 : undefined,
+          reveal: 1,
+          revealEdge,
+        });
+        queueDistance += width / 2 + gap;
+      });
     } else {
-      startPlacements = samplePlacementsEvenly(rawStart, count).map(
-        (placement, index) => ({
-          ...placement,
-          text: sourceTokens[index % sourceTokens.length],
-          index,
-        }),
+      const selectedStartIndexes = evenlySpacedPlacementIndexes(
+        rawStart.length,
+        count,
       );
-      const sampledEnd = samplePlacementsEvenly(rawEnd, count).map(
-        (placement, index) => ({
-          ...placement,
-          text: sourceTokens[index % sourceTokens.length],
-          index,
-        }),
+      const selectedStart = selectedStartIndexes.map(
+        (index) => rawStart[index],
       );
-      endPlacements = spatiallyMatchPlacements(startPlacements, sampledEnd);
+      startPlacements = selectedStart.map((placement, index) => ({
+        ...placement,
+        index,
+        opacity: 1,
+        scale: 1,
+      }));
+      const naturalEnd = rawEnd.map((placement, index) => ({
+        ...placement,
+        text: startPlacements[index].text,
+        index,
+        opacity: 1,
+        scale: 1,
+      }));
+      endPlacements =
+        selectedLayout === "outline"
+          ? naturalEnd
+          : spatiallyMatchPlacements(startPlacements, naturalEnd);
+
+      const selected = new Set(selectedStartIndexes);
+      const extraStartPlacements = rawStart
+        .map((placement, rawIndex) => ({
+          placement,
+          rawIndex,
+          progress: pathProgressForPoint(startShape, start.closed, placement),
+        }))
+        .filter(({ rawIndex }) => !selected.has(rawIndex));
+      if (followContour) {
+        extraStartPlacements.sort((a, b) => b.progress - a.progress);
+      }
+      let queueDistance = size + gap;
+      extraStartPlacements.forEach(({ placement, progress }) => {
+        const index = startPlacements.length;
+        const text = placement.text;
+        const width = tokenWidth(text, size);
+        queueDistance += width / 2;
+        startPlacements.push({
+          ...placement,
+          text,
+          index,
+          opacity: 1,
+          scale: 1,
+          pathProgress: followContour ? progress : undefined,
+          pathOffset: followContour ? 0 : undefined,
+          reveal: 1,
+          revealEdge: "start",
+        });
+        const queueProgress = 1;
+        const queueOffset = queueDistance;
+        const queued = queuedPlacement(
+          endShape,
+          end.closed,
+          placement,
+          queueProgress,
+          queueOffset,
+          selectedOrientation,
+          selectedLayout,
+        );
+        endPlacements.push({
+          ...queued,
+          text,
+          index,
+          opacity: 1,
+          scale: 1,
+          pathProgress: followContour ? queueProgress : undefined,
+          pathOffset: followContour ? queueOffset : undefined,
+          reveal: 0,
+          revealEdge: "start",
+        });
+        queueDistance += width / 2 + gap;
+      });
     }
 
     return {
@@ -870,8 +1208,12 @@
       startClosed: start.closed,
       endClosed: end.closed,
       layout: selectedLayout,
+      orientation: selectedOrientation,
       size,
       gap,
+      countMode,
+      startCapacity: rawStart.length,
+      endCapacity: rawEnd.length,
       startPlacements,
       endPlacements,
     };
@@ -913,6 +1255,10 @@
     const maximumSteps = 18;
 
     for (const placement of source) {
+      if ((placement.opacity ?? 1) < 0.08) {
+        result.push(placement);
+        continue;
+      }
       const radians = placement.angle * (Math.PI / 180);
       const tangent = { x: Math.cos(radians), y: Math.sin(radians) };
       const offsets = [0];
@@ -922,10 +1268,11 @@
       }
 
       let bestPlacement = placement;
+      const placementScale = placement.scale ?? 1;
       let bestBox = makeCollisionBox(
         placement,
-        tokenWidth(placement.text, size),
-        size,
+        tokenWidth(placement.text, size) * placementScale,
+        size * placementScale,
         placement.angle,
         gap,
       );
@@ -938,8 +1285,8 @@
         };
         const candidateBox = makeCollisionBox(
           candidate,
-          tokenWidth(candidate.text, size),
-          size,
+          tokenWidth(candidate.text, size) * placementScale,
+          size * placementScale,
           candidate.angle,
           gap,
         );
@@ -975,12 +1322,67 @@
           ? (index / (count - 1) - 0.5) * 0.18 * Math.sin(Math.PI * progress)
           : 0;
       const localProgress = easedMotionProgress(progress + offset, feel);
+      const opacity =
+        (start.opacity ?? 1) +
+        ((end.opacity ?? 1) - (start.opacity ?? 1)) * localProgress;
+      const scale =
+        (start.scale ?? 1) +
+        ((end.scale ?? 1) - (start.scale ?? 1)) * localProgress;
+      const startReveal = start.reveal ?? 1;
+      const endReveal = end.reveal ?? 1;
+      const hasReveal = start.reveal !== undefined || end.reveal !== undefined;
+      let reveal = startReveal;
+      if (startReveal < endReveal) {
+        const phase = clampProgress(localProgress / 0.32);
+        const easedPhase = phase * phase * (3 - 2 * phase);
+        reveal = startReveal + (endReveal - startReveal) * easedPhase;
+      } else if (startReveal > endReveal) {
+        const phase = clampProgress((localProgress - 0.68) / 0.32);
+        const easedPhase = phase * phase * (3 - 2 * phase);
+        reveal = startReveal + (endReveal - startReveal) * easedPhase;
+      }
+      let x = start.x + (end.x - start.x) * localProgress;
+      let y = start.y + (end.y - start.y) * localProgress;
+      let angle = interpolateAngle(start.angle, end.angle, localProgress);
+      if (start.pathProgress !== undefined && end.pathProgress !== undefined) {
+        const shape = interpolateMotionShape(
+          plan,
+          clampProgress(localProgress),
+        );
+        const pathProgress =
+          start.pathProgress +
+          (end.pathProgress - start.pathProgress) * localProgress;
+        const pathOffset =
+          (start.pathOffset ?? 0) +
+          ((end.pathOffset ?? 0) - (start.pathOffset ?? 0)) * localProgress;
+        const pathPoint = pointOnNormalizedPath(
+          shape,
+          plan.startClosed,
+          pathProgress,
+        );
+        const radians = pathPoint.angle * (Math.PI / 180);
+        x = pathPoint.point.x + Math.cos(radians) * pathOffset;
+        y = pathPoint.point.y + Math.sin(radians) * pathOffset;
+        angle = placementAngle(
+          plan.orientation,
+          pathPoint.angle,
+          { x, y },
+          centerOf(shape),
+          plan.layout,
+        );
+      }
       return {
-        x: start.x + (end.x - start.x) * localProgress,
-        y: start.y + (end.y - start.y) * localProgress,
-        angle: interpolateAngle(start.angle, end.angle, localProgress),
+        x,
+        y,
+        angle,
         text: start.text,
         index: start.index,
+        opacity: clampProgress(opacity),
+        scale: Math.max(0.01, scale),
+        reveal: hasReveal ? clampProgress(reveal) : undefined,
+        revealEdge: hasReveal
+          ? (start.revealEdge ?? end.revealEdge)
+          : undefined,
       };
     });
     if (plan.layout !== "outline" || progress <= 0.001 || progress >= 0.999) {
@@ -2034,13 +2436,13 @@
   }
 
   function placementTransform(placement: Placement) {
-    return `translate(${placement.x.toFixed(2)}px, ${placement.y.toFixed(2)}px) rotate(${placement.angle.toFixed(2)}deg)`;
+    return `translate(${placement.x.toFixed(2)}px, ${placement.y.toFixed(2)}px) rotate(${placement.angle.toFixed(2)}deg) scale(${(placement.scale ?? 1).toFixed(3)})`;
   }
 
   function animatedExportMarkup() {
     if (!motionPlan) return "";
     const prefix = `cp-${shortHash(
-      `${poem}-${motionPlan.startPlacements.length}-${motionDuration}-${motionFeel}-${letterMotion}`,
+      `${poem}-${motionPlan.startPlacements.length}-${motionDuration}-${motionFeel}-${letterMotion}-${motionCountMode}`,
     )}`;
     const frameCount =
       letterMotion === "ripple" ? (motionLoop ? 33 : 25) : motionLoop ? 17 : 9;
@@ -2069,7 +2471,7 @@
         const keyframes = frames
           .map((frame, frameIndex) => {
             const percentage = (frameIndex / (frameCount - 1)) * 100;
-            return `${percentage.toFixed(3)}%{transform:${placementTransform(frame[placementIndex])}}`;
+            return `${percentage.toFixed(3)}%{transform:${placementTransform(frame[placementIndex])};opacity:${(frame[placementIndex].opacity ?? 1).toFixed(3)}}`;
           })
           .join("");
         const selectors = animationTargets
@@ -2078,11 +2480,45 @@
         return `@keyframes ${prefix}-piece-${placementIndex}{${keyframes}}\n${selectors}{animation:${prefix}-piece-${placementIndex} ${totalDuration.toFixed(2)}s ${timingFunction} ${motionLoop ? "infinite" : "1 forwards"}}`;
       })
       .join("\n");
-    const pieces = motionPlan.startPlacements
-      .map(
-        (placement, index) =>
-          `<g class="${prefix}-piece ${prefix}-piece-${index}" style="transform:${placementTransform(placement)}"><text x="0" y="0" fill="${escapeXml(inkColor)}" font-family="${escapeXml(fontFamily)}" font-size="${fontSize}" text-anchor="middle" dominant-baseline="middle">${escapeXml(placement.text)}</text></g>`,
+    const clippedPieceIndexes = motionPlan.startPlacements
+      .map((placement, index) =>
+        placement.reveal !== undefined ||
+        motionPlan.endPlacements[index].reveal !== undefined
+          ? index
+          : -1,
       )
+      .filter((index) => index >= 0);
+    const revealAnimationRules = clippedPieceIndexes
+      .map((placementIndex) => {
+        const keyframes = frames
+          .map((frame, frameIndex) => {
+            const percentage = (frameIndex / (frameCount - 1)) * 100;
+            const reveal = clampProgress(
+              frame[placementIndex].reveal ?? 1,
+            ).toFixed(4);
+            return `${percentage.toFixed(3)}%{transform:scaleX(${reveal})}`;
+          })
+          .join("");
+        const selectors = animationTargets
+          .map((target) => `${target} .${prefix}-reveal-${placementIndex}`)
+          .join(",");
+        return `@keyframes ${prefix}-reveal-keyframes-${placementIndex}{${keyframes}}\n${selectors}{animation:${prefix}-reveal-keyframes-${placementIndex} ${totalDuration.toFixed(2)}s ${timingFunction} ${motionLoop ? "infinite" : "1 forwards"}}`;
+      })
+      .join("\n");
+    const clipDefinitions = clippedPieceIndexes
+      .map((index) => {
+        const placement = motionPlan.startPlacements[index];
+        const origin = placement.revealEdge === "end" ? "100% 50%" : "0% 50%";
+        return `<clipPath id="${prefix}-clip-${index}" clipPathUnits="objectBoundingBox"><rect class="${prefix}-reveal ${prefix}-reveal-${index}" x="0" y="0" width="1" height="1" style="transform:scaleX(${clampProgress(placement.reveal ?? 1).toFixed(4)});transform-origin:${origin}" /></clipPath>`;
+      })
+      .join("");
+    const pieces = motionPlan.startPlacements
+      .map((placement, index) => {
+        const clip = clippedPieceIndexes.includes(index)
+          ? ` clip-path="url(#${prefix}-clip-${index})"`
+          : "";
+        return `<g class="${prefix}-piece ${prefix}-piece-${index}" style="transform:${placementTransform(placement)};opacity:${(placement.opacity ?? 1).toFixed(3)}"><text${clip} x="0" y="0" fill="${escapeXml(inkColor)}" font-family="${escapeXml(fontFamily)}" font-size="${fontSize}" text-anchor="middle" dominant-baseline="middle">${escapeXml(placement.text)}</text></g>`;
+      })
       .join("");
     const hoverAttributes =
       motionTrigger === "hover" ? ' tabindex="0" focusable="true"' : "";
@@ -2090,11 +2526,14 @@
 <svg class="${prefix}"${hoverAttributes} xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-label="Animated concrete poem">
   <title>Animated concrete poem</title>
   <style><![CDATA[
-    .${prefix} .${prefix}-piece{transform-box:view-box;transform-origin:0 0;will-change:transform}
+    .${prefix} .${prefix}-piece{transform-box:view-box;transform-origin:0 0;will-change:transform,opacity}
+    .${prefix} .${prefix}-reveal{transform-box:fill-box;will-change:transform}
     ${animationRules}
-    @media (prefers-reduced-motion: reduce){.${prefix} .${prefix}-piece{animation:none!important}}
+    ${revealAnimationRules}
+    @media (prefers-reduced-motion: reduce){.${prefix} .${prefix}-piece,.${prefix} .${prefix}-reveal{animation:none!important}}
   ]]></style>
   <rect width="${WIDTH}" height="${HEIGHT}" fill="${escapeXml(paperColor)}" />
+  <defs>${clipDefinitions}</defs>
   ${pieces}
 </svg>`;
   }
@@ -2400,6 +2839,7 @@
           <button
             class:active={drawing}
             type="button"
+            aria-pressed={drawing}
             disabled={motionEnabled &&
               motionType === "bend" &&
               bendStep !== "idle" &&
@@ -2409,17 +2849,18 @@
               drawing = !drawing;
             }}
           >
-            <span>✎</span>{drawing ? "Drawing…" : "Draw"}
+            <span>✎</span>Draw
           </button>
           <button
             type="button"
+            aria-label="Create a shape from an image"
             disabled={motionEnabled &&
               motionType === "bend" &&
               bendStep !== "idle" &&
               bendStep !== "done"}
             on:click={openImageTool}
           >
-            <span>▧</span>From image
+            <span>▧</span>Image
           </button>
         </div>
         <div class="toggle-row">
@@ -2460,14 +2901,18 @@
           </p>
           <div class="motion-kind-grid">
             <button type="button" on:click={() => enableMotion("morph")}>
-              <span>◇→♡</span>
-              <strong>Morph</strong>
-              <small>Shape to shape</small>
+              <span class="motion-kind-icon">◇→♡</span>
+              <span class="motion-kind-copy">
+                <strong>Morph</strong>
+                <small>Shape to shape</small>
+              </span>
             </button>
             <button type="button" on:click={() => enableMotion("bend")}>
-              <span>⌁</span>
-              <strong>Bend / flap</strong>
-              <small>Move one part</small>
+              <span class="motion-kind-icon">⌁</span>
+              <span class="motion-kind-copy">
+                <strong>Bend / flap</strong>
+                <small>Move one part</small>
+              </span>
             </button>
           </div>
         {:else}
@@ -2562,6 +3007,26 @@
             >
           </div>
 
+          <span class="motion-control-label">Piece count</span>
+          <div class="motion-options">
+            <button
+              class:active={motionCountMode === "fit"}
+              type="button"
+              on:click={() => setMotionCountMode("fit")}>Fit both</button
+            >
+            <button
+              class:active={motionCountMode === "enter-exit"}
+              type="button"
+              on:click={() => setMotionCountMode("enter-exit")}
+              >Enter / exit</button
+            >
+          </div>
+          {#if motionPlan && motionCapacityMessage(motionPlan)}
+            <p class="motion-capacity-note">
+              {motionCapacityMessage(motionPlan)}
+            </p>
+          {/if}
+
           <span class="motion-control-label">Starts</span>
           <div class="motion-options">
             <button
@@ -2622,11 +3087,11 @@
               : bendStep === "pose"
                 ? "Drag the selected part into its ending pose."
                 : motionPreviewing
-                  ? `${placementCountLabel(renderedPlacements.length, unit)} · motion preview`
+                  ? `${placementCountLabel(visiblePlacementCount(renderedPlacements), unit)} · motion preview`
                   : drawing
                     ? "Drag anywhere on the paper to draw a new path."
                     : motionEnabled
-                      ? `Pose ${editingMotionPose === "start" ? "A" : "B"} · ${placementCountLabel(renderedPlacements.length, unit)} · ${layout}`
+                      ? `Pose ${editingMotionPose === "start" ? "A" : "B"} · ${placementCountLabel(motionPlan ? motionPoseCount(motionPlan, editingMotionPose) : placements.length, unit)} · ${layout}`
                       : `${placementCountLabel(placements.length, unit)} · ${layout}`}
         </p>
         <div>
@@ -2669,9 +3134,29 @@
         >
           <rect width={WIDTH} height={HEIGHT} fill={paperColor} />
 
+          <defs>
+            {#each renderedPlacements as placement}
+              {#if placement.reveal !== undefined}
+                {@const reveal = clampProgress(placement.reveal)}
+                <clipPath
+                  id={`poetry-piece-clip-${placement.index}`}
+                  clipPathUnits="objectBoundingBox"
+                >
+                  <rect
+                    x={placement.revealEdge === "end" ? 1 - reveal : 0}
+                    y="0"
+                    width={reveal}
+                    height="1"
+                  />
+                </clipPath>
+              {/if}
+            {/each}
+          </defs>
+
           {#each renderedPlacements as placement}
             <g
-              transform={`translate(${placement.x.toFixed(2)} ${placement.y.toFixed(2)}) rotate(${placement.angle.toFixed(2)})`}
+              transform={`translate(${placement.x.toFixed(2)} ${placement.y.toFixed(2)}) rotate(${placement.angle.toFixed(2)}) scale(${(placement.scale ?? 1).toFixed(3)})`}
+              opacity={(placement.opacity ?? 1).toFixed(3)}
             >
               <text
                 class="poetry-token"
@@ -2681,7 +3166,11 @@
                 font-family={fontFamily}
                 font-size={fontSize}
                 text-anchor="middle"
-                dominant-baseline="middle">{placement.text}</text
+                dominant-baseline="middle"
+                clip-path={placement.reveal === undefined
+                  ? undefined
+                  : `url(#poetry-piece-clip-${placement.index})`}
+                >{placement.text}</text
               >
             </g>
           {/each}
@@ -3213,6 +3702,17 @@
     grid-template-columns: repeat(4, 1fr);
   }
 
+  .shape-section,
+  .motion-section {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+
+  .shape-section .section-heading,
+  .motion-section .section-heading {
+    margin-bottom: 10px;
+  }
+
   .layout-grid button,
   .shape-grid button {
     display: flex;
@@ -3232,6 +3732,24 @@
     transition:
       background 120ms ease,
       color 120ms ease;
+  }
+
+  .shape-grid button {
+    min-width: 0;
+    min-height: 40px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 6px 7px;
+    overflow: hidden;
+    font-size: 0.62rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .shape-grid button span {
+    flex: 0 0 auto;
   }
 
   .layout-grid button span,
@@ -3418,8 +3936,9 @@
   .toggle-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
-    margin-top: 9px;
+    gap: 22px;
+    margin-top: 10px;
+    line-height: 1.2;
   }
 
   .toggle-row label {
@@ -3436,32 +3955,30 @@
   .motion-intro,
   .pose-help,
   .reduced-motion-note {
-    margin: 0 0 8px 27px;
+    margin: 0 0 10px;
     color: rgba(36, 36, 36, 0.72);
     font-family: var(--font-pp-editorial-sans);
-    font-size: 0.7rem;
-    line-height: 1.35;
+    font-size: 0.69rem;
+    line-height: 1.45;
   }
 
   .motion-kind-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    margin-left: 27px;
     border-top: 1px solid rgba(36, 36, 36, 0.5);
     border-left: 1px solid rgba(36, 36, 36, 0.5);
   }
 
   .motion-kind-grid button {
-    min-height: 66px;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    grid-template-rows: 1fr auto;
-    column-gap: 7px;
+    min-width: 0;
+    min-height: 58px;
+    display: flex;
     align-items: center;
+    gap: 10px;
     border: 0;
     border-right: 1px solid rgba(36, 36, 36, 0.5);
     border-bottom: 1px solid rgba(36, 36, 36, 0.5);
-    padding: 7px;
+    padding: 9px 10px;
     background: transparent;
     color: var(--color-dark);
     cursor: pointer;
@@ -3473,32 +3990,41 @@
     color: var(--color-light);
   }
 
-  .motion-kind-grid button > span {
-    grid-row: 1 / -1;
+  .motion-kind-icon {
+    flex: 0 0 auto;
     color: var(--color-red-std);
     font-family: var(--font-pp-editorial);
     font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .motion-kind-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
 
   .motion-kind-grid strong,
   .motion-kind-grid small,
   .pose-switcher small,
   .motion-control-label,
+  .motion-capacity-note,
   .bend-instruction,
   .motion-bottom-row {
     font-family: var(--font-pp-editorial-sans);
   }
 
   .motion-kind-grid strong {
-    align-self: end;
     font-size: 0.7rem;
     font-weight: 600;
+    line-height: 1.1;
     text-transform: uppercase;
   }
 
   .motion-kind-grid small {
-    align-self: start;
     font-size: 0.61rem;
+    line-height: 1.15;
     opacity: 0.62;
   }
 
@@ -3506,7 +4032,6 @@
     display: grid;
     grid-template-columns: 1fr 22px 1fr;
     align-items: stretch;
-    margin-left: 27px;
   }
 
   .pose-switcher > i {
@@ -3543,8 +4068,8 @@
   }
 
   .pose-help {
-    margin-top: 6px;
-    margin-bottom: 6px;
+    margin-top: 7px;
+    margin-bottom: 0;
   }
 
   .bend-instruction {
@@ -3552,7 +4077,6 @@
     display: grid;
     grid-template-columns: 30px 1fr;
     align-items: center;
-    margin-left: 27px;
     border: 1px solid var(--color-dark);
     background: rgba(239, 54, 63, 0.08);
   }
@@ -3579,7 +4103,7 @@
     grid-template-columns: 72px 1fr;
     align-items: center;
     gap: 8px;
-    margin: 8px 0 0 27px;
+    margin: 10px 0 0;
   }
 
   .motion-player button,
@@ -3616,7 +4140,7 @@
 
   .motion-control-label {
     display: block;
-    margin: 6px 0 3px 27px;
+    margin: 9px 0 4px;
     font-size: 0.61rem;
     letter-spacing: 0.07em;
     opacity: 0.62;
@@ -3626,7 +4150,6 @@
   .motion-options {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    margin-left: 27px;
   }
 
   .motion-options.three-up {
@@ -3641,8 +4164,15 @@
     border-right: 1px solid rgba(36, 36, 36, 0.5);
   }
 
+  .motion-capacity-note {
+    margin: 5px 0 0;
+    color: rgba(36, 36, 36, 0.68);
+    font-size: 0.61rem;
+    line-height: 1.35;
+  }
+
   .motion-speed {
-    margin-left: 27px;
+    margin-top: 10px;
   }
 
   .motion-bottom-row {
@@ -3650,7 +4180,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    margin: 7px 0 0 27px;
+    margin: 9px 0 0;
     font-size: 0.64rem;
     text-transform: uppercase;
   }
@@ -3667,7 +4197,7 @@
   }
 
   .reduced-motion-note {
-    margin-top: 7px;
+    margin-top: 9px;
     margin-bottom: 0;
   }
 
