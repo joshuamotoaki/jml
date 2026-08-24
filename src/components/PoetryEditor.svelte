@@ -2648,8 +2648,8 @@
 
 <div class="poetry-app">
   <main class="editor-shell">
-    <aside class="control-panel" aria-label="Poetry controls">
-      <div class="sidebar-heading">
+    <header class="editor-header">
+      <div class="editor-brand">
         <h1 class="editor-title">
           <span>Concrete</span>
           <em>Poetry</em>
@@ -2658,6 +2658,25 @@
           >by <span class="editor-byline-jp">劉元明</span> · JML</a
         >
       </div>
+      <div class="export-actions">
+        <button type="button" on:click={copySvg}
+          >{motionEnabled ? "Copy motion embed" : "Copy embed"}</button
+        >
+        <button type="button" on:click={downloadPng}>PNG</button>
+        {#if motionEnabled}
+          <button type="button" on:click={downloadSvg}>Static SVG</button>
+          <button class="primary" type="button" on:click={downloadAnimatedSvg}
+            >Motion SVG ↘</button
+          >
+        {:else}
+          <button class="primary" type="button" on:click={downloadSvg}
+            >Download SVG ↘</button
+          >
+        {/if}
+      </div>
+    </header>
+
+    <aside class="control-panel" aria-label="Poetry controls">
       <section class="control-section words-section">
         <div class="section-heading">
           <h2>Words</h2>
@@ -3289,22 +3308,6 @@
             ></span>
           </label>
         </div>
-        <div class="export-actions">
-          <button type="button" on:click={copySvg}
-            >{motionEnabled ? "Copy motion embed" : "Copy embed"}</button
-          >
-          <button type="button" on:click={downloadPng}>PNG</button>
-          {#if motionEnabled}
-            <button type="button" on:click={downloadSvg}>Static SVG</button>
-            <button class="primary" type="button" on:click={downloadAnimatedSvg}
-              >Motion SVG ↘</button
-            >
-          {:else}
-            <button class="primary" type="button" on:click={downloadSvg}
-              >Download SVG ↘</button
-            >
-          {/if}
-        </div>
       </div>
     </section>
   </main>
@@ -3585,9 +3588,12 @@
   }
 
   .poetry-app {
-    --poetry-paper: #f0f0f0;
-    --poetry-stage: #d9d9d3;
-    --poetry-raised: rgba(255, 255, 255, 0.28);
+    --poetry-paper: #f0efe9;
+    --poetry-stage: #191918;
+    --poetry-image-workspace: #d9d9d3;
+    --poetry-stage-ink: #eeeae0;
+    --poetry-stage-rule: rgba(238, 234, 224, 0.38);
+    --poetry-raised: rgba(255, 255, 255, 0.38);
     --poetry-rule: #242424;
     --poetry-rule-mid: rgba(36, 36, 36, 0.4);
     --poetry-rule-soft: rgba(36, 36, 36, 0.2);
@@ -3621,12 +3627,29 @@
     pointer-events: none;
   }
 
-  .sidebar-heading {
+  .editor-header {
+    position: relative;
+    grid-column: 1 / -1;
     display: flex;
+    min-width: 0;
+    min-height: 52px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 7px 14px 6px 16px;
+    border-bottom: 0;
+    background: var(--poetry-stage);
+    color: var(--poetry-stage-ink);
+  }
+
+  .editor-brand {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    display: flex;
+    flex: 0 1 auto;
     flex-direction: column;
     align-items: flex-start;
-    padding: 8px 14px 7px;
-    border-bottom: 1px solid var(--poetry-rule);
     line-height: 1;
   }
 
@@ -3635,7 +3658,7 @@
     align-items: baseline;
     gap: 8px;
     margin: 0;
-    font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+    font-size: clamp(1.25rem, 1.8vw, 1.5rem);
     font-weight: 400;
     letter-spacing: -0.045em;
   }
@@ -3645,8 +3668,8 @@
   }
 
   .editor-byline {
-    margin-top: 4px;
-    color: var(--poetry-muted);
+    margin-top: 3px;
+    color: rgba(238, 234, 224, 0.58);
     font-family: var(--font-pp-editorial-sans);
     font-size: 0.625rem;
     letter-spacing: 0.1em;
@@ -3665,17 +3688,24 @@
 
   .editor-shell {
     display: grid;
-    grid-template-columns: minmax(304px, 328px) minmax(0, 1fr);
+    grid-template-columns: minmax(324px, 348px) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
     height: 100vh;
     min-height: 0;
+    background: var(--poetry-stage);
   }
 
   .control-panel {
+    grid-column: 1;
+    grid-row: 2;
     min-height: 0;
+    margin: 10px 8px 12px 12px;
     overflow-y: auto;
+    border: 1px solid rgba(36, 36, 36, 0.72);
+    border-radius: 0;
     background: var(--poetry-paper);
     color: var(--color-dark);
-    border-right: 1px solid var(--poetry-rule);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
     scrollbar-color: rgba(36, 36, 36, 0.42) transparent;
     scrollbar-width: thin;
   }
@@ -3690,8 +3720,12 @@
 
   .control-section {
     --section-accent: var(--color-red-std);
-    padding: 9px 14px 10px;
+    padding: 11px 14px 12px;
     border-bottom: 1px solid var(--poetry-rule-soft);
+  }
+
+  .words-section {
+    padding-top: 14px;
   }
 
   .build-section {
@@ -3703,7 +3737,8 @@
   }
 
   .motion-section {
-    --section-accent: var(--color-red-std);
+    --section-accent: var(--color-blue-std);
+    border-bottom: 0;
   }
 
   .section-heading {
@@ -3725,7 +3760,8 @@
   }
 
   .section-heading small {
-    color: var(--poetry-muted);
+    color: var(--section-accent);
+    font-weight: 600;
   }
 
   .section-heading h2 {
@@ -3741,9 +3777,9 @@
 
   .section-heading h2::before {
     content: "";
-    width: 12px;
-    height: 2px;
-    flex: 0 0 12px;
+    width: 18px;
+    height: 3px;
+    flex: 0 0 18px;
     background: var(--section-accent);
     filter: blur(0.2px);
   }
@@ -3789,8 +3825,8 @@
 
   .shape-section,
   .motion-section {
-    padding-top: 11px;
-    padding-bottom: 11px;
+    padding-top: 12px;
+    padding-bottom: 12px;
   }
 
   .shape-section .section-heading,
@@ -3872,7 +3908,7 @@
   }
 
   .shape-grid button:nth-child(4) span {
-    color: var(--color-red-std);
+    color: var(--section-accent);
   }
 
   .control-label {
@@ -4132,8 +4168,8 @@
     content: "";
     width: 7px;
     height: 4px;
-    border-bottom: 1.5px solid var(--color-red-std);
-    border-left: 1.5px solid var(--color-red-std);
+    border-bottom: 1.5px solid var(--section-accent, var(--poetry-focus));
+    border-left: 1.5px solid var(--section-accent, var(--poetry-focus));
     opacity: 0;
     transform: translateY(-1px) rotate(-45deg);
     transition: opacity 100ms ease;
@@ -4146,8 +4182,8 @@
 
   .shape-toggle input:checked + .shape-check,
   .compact-toggle input:checked + .shape-check {
-    border-color: rgba(230, 57, 70, 0.58);
-    background: rgba(230, 57, 70, 0.035);
+    border-color: var(--section-accent, var(--poetry-focus));
+    background: transparent;
   }
 
   .shape-toggle input:checked + .shape-check::after,
@@ -4212,7 +4248,7 @@
 
   .motion-kind-icon {
     flex: 0 0 auto;
-    color: var(--color-red-std);
+    color: var(--section-accent);
     font-family: var(--font-pp-editorial);
     font-size: 1.15rem;
     line-height: 1;
@@ -4456,12 +4492,15 @@
   }
 
   .stage-panel {
+    grid-column: 2;
+    grid-row: 2;
     min-width: 0;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
     min-height: 0;
-    padding: 12px 14px 10px;
+    padding: 12px clamp(14px, 2.2vw, 34px) 10px;
     background: var(--poetry-stage);
+    color: var(--poetry-stage-ink);
   }
 
   .stage-toolbar,
@@ -4494,11 +4533,20 @@
     gap: 8px;
   }
 
+  .editor-header .export-actions {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
   .stage-toolbar button,
   .export-actions button {
     min-height: 32px;
     border: 0;
-    border-bottom: 1px solid var(--poetry-rule-mid);
+    border-bottom: 1px solid var(--poetry-stage-rule);
     padding: 5px 3px 4px;
     background: transparent;
     cursor: pointer;
@@ -4510,7 +4558,7 @@
 
   .stage-toolbar button:hover,
   .export-actions button:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.07);
     color: var(--color-red-std);
   }
 
@@ -4541,9 +4589,11 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    border: 1px solid var(--poetry-rule);
+    border: 1px solid rgba(238, 234, 224, 0.42);
     background: var(--poetry-paper);
-    box-shadow: 0 7px 24px rgba(36, 36, 36, 0.055);
+    box-shadow:
+      0 20px 48px rgba(0, 0, 0, 0.32),
+      0 2px 5px rgba(0, 0, 0, 0.28);
   }
 
   .canvas-wrap.drawing {
@@ -4577,8 +4627,9 @@
   }
 
   .stage-footer {
-    min-height: 42px;
-    padding: 10px 0 0;
+    min-height: 34px;
+    justify-content: flex-start;
+    padding: 8px 0 0;
   }
 
   .color-control {
@@ -4605,7 +4656,7 @@
     width: 34px;
     height: 18px;
     flex: 0 0 34px;
-    border: 1px solid var(--poetry-rule-mid);
+    border: 1px solid var(--poetry-stage-rule);
     background: var(--swatch-color);
     transition: border-color 120ms ease;
   }
@@ -4794,7 +4845,7 @@
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
     padding: 12px 12px 9px;
-    background: var(--poetry-stage);
+    background: var(--poetry-image-workspace);
   }
 
   .selection-toolbar {
@@ -5142,18 +5193,23 @@
   }
 
   @media (max-height: 820px) and (min-width: 721px) {
-    .sidebar-heading {
-      padding-top: 7px;
-      padding-bottom: 6px;
+    .editor-header {
+      min-height: 47px;
+      padding-top: 5px;
+      padding-bottom: 5px;
     }
 
     .editor-title {
-      font-size: 1.72rem;
+      font-size: 1.3rem;
     }
 
     .control-section {
-      padding-top: 8px;
-      padding-bottom: 9px;
+      padding-top: 9px;
+      padding-bottom: 10px;
+    }
+
+    .words-section {
+      padding-top: 12px;
     }
 
     .section-heading {
@@ -5196,8 +5252,8 @@
 
     .shape-section,
     .motion-section {
-      padding-top: 9px;
-      padding-bottom: 9px;
+      padding-top: 10px;
+      padding-bottom: 10px;
     }
 
     .shape-section .section-heading,
@@ -5234,15 +5290,8 @@
       margin-left: auto;
     }
 
-    .stage-footer {
-      align-items: flex-end;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .export-actions {
-      width: 100%;
-      justify-content: flex-end;
+    .editor-header {
+      gap: 12px;
     }
   }
 
@@ -5257,16 +5306,19 @@
       overflow: visible;
     }
 
-    .sidebar-heading {
+    .editor-header {
       grid-column: 1 / -1;
     }
 
     .editor-shell {
       grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto;
       height: auto;
     }
 
     .control-panel {
+      grid-column: 1;
+      grid-row: 2;
       display: grid;
       grid-template-columns: 1fr 1fr;
       overflow: visible;
@@ -5282,6 +5334,8 @@
     }
 
     .stage-panel {
+      grid-column: 1;
+      grid-row: 3;
       min-height: 620px;
       border-top: 1px solid var(--poetry-rule);
     }
@@ -5310,17 +5364,19 @@
       min-height: 300px;
     }
 
-    .stage-footer {
-      align-items: flex-end;
-      flex-direction: column;
+    .editor-header {
+      gap: 10px;
+      padding-right: 10px;
+      padding-left: 10px;
     }
 
-    .export-actions {
-      width: 100%;
+    .editor-header .export-actions {
+      gap: 6px;
     }
 
-    .export-actions button {
-      flex: 1;
+    .editor-header .export-actions button {
+      min-height: 29px;
+      font-size: 0.6rem;
     }
   }
 
