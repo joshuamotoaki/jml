@@ -1,5 +1,4 @@
 ---
-import AboutOverlay from "../components/AboutOverlay.astro";
 import "../styles/fonts.css";
 import "../styles/global.css";
 
@@ -18,8 +17,19 @@ const { title = "Joshua Motoaki Lau" } = Astro.props;
     <title>{title}</title>
     <slot name="head" />
   </head>
-  <body class="bg-light text-dark font-serif">
+  <body class="bg-light text-dark">
+    <svg class="absolute size-0" aria-hidden="true">
+      <filter id="grain">
+        <feTurbulence baseFrequency="0.4" numOctaves="3" stitchTiles="noStitch"
+        ></feTurbulence>
+        <feColorMatrix type="saturate" values="0"></feColorMatrix>
+      </filter>
+      <filter id="grain-color">
+        <feTurbulence baseFrequency="0.4" numOctaves="4" stitchTiles="noStitch"
+        ></feTurbulence>
+        <feColorMatrix type="saturate" values="128"></feColorMatrix>
+      </filter>
+    </svg>
     <slot />
-    <AboutOverlay />
   </body>
 </html>

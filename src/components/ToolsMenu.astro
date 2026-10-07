@@ -1,11 +1,10 @@
 ---
 interface Props {
   id: string;
-  class?: string;
   triggerClass?: string;
 }
 
-const { id, class: className, triggerClass } = Astro.props;
+const { id, triggerClass } = Astro.props;
 const panelId = `${id}-panel`;
 
 const tools = [
@@ -14,7 +13,7 @@ const tools = [
 ];
 ---
 
-<div class:list={["tools-menu", className]} data-tools-menu>
+<div class="tools-menu" data-tools-menu>
   <button
     class:list={[
       "nav-button cursor-pointer border-0 bg-transparent p-0",

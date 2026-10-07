@@ -1,0 +1,37 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import "../styles/blog.css";
+
+interface Props {
+  title: string;
+  description: string;
+  /** Show a link back to the post list (hidden on the list itself). */
+  backLink?: boolean;
+}
+
+const { title, description, backLink = false } = Astro.props;
+---
+
+<BaseLayout title={title}>
+  <Fragment slot="head">
+    <meta name="description" content={description} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="JML Blog RSS"
+      href="/rss.xml"
+    />
+  </Fragment>
+
+  <div class="blog">
+    <nav class="blog-nav">
+      <a href="/">Joshua Motoaki Lau (<span lang="zh-Hant">劉元明</span>)</a>
+      <div class="blog-nav-links">
+        {backLink && <a href="/blog/">Blog</a>}
+        <a href="/rss.xml">RSS</a>
+      </div>
+    </nav>
+
+    <slot />
+  </div>
+</BaseLayout>

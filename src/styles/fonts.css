@@ -46,9 +46,10 @@
   font-display: swap;
 }
 
+/* Subset to the three glyphs of 劉元明; regenerate with pyftsubset if more are needed. */
 @font-face {
   font-family: "Noto Serif JP";
-  src: url("/fonts/NotoSerifJP-VariableFont_wght.ttf") format("truetype");
+  src: url("/fonts/NotoSerifJP-Name.woff2") format("woff2");
   font-weight: 200 900;
   font-style: normal;
   font-display: swap;

@@ -1,5 +1,5 @@
 {
-  "name": "my-website",
+  "name": "motoaki.dev",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
@@ -34,8 +34,6 @@
     "lint-staged": "^16.1.0",
     "prettier": "3.5.3",
     "prettier-plugin-astro": "0.14.1",
-    "prettier-plugin-svelte": "^4.1.1",
-    "vite": "^6.4.1",
-    "wrangler": "^4.18.0"
+    "prettier-plugin-svelte": "^4.1.1"
   }
 }

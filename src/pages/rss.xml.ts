@@ -1,12 +1,9 @@
 import rss from "@astrojs/rss";
-import { getCollection } from "astro:content";
 import type { APIRoute } from "astro";
+import { getPosts } from "../lib/blog";
 
 export const GET: APIRoute = async (context) => {
-  const includeDrafts = !import.meta.env.PROD;
-  const posts = (await getCollection("blog"))
-    .filter((post) => includeDrafts || !post.data.draft)
-    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+  const posts = await getPosts();
 
   return rss({
     title: "Joshua Motoaki Lau — Blog",

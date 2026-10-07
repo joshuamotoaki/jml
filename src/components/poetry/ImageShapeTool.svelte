@@ -1,7 +1,7 @@
 <script lang="ts">
   import { contours } from "d3-contour";
   import { onDestroy, tick } from "svelte";
-  import { automaticMaskFromPixels } from "../../lib/poetry-image-mask";
+  import { automaticMaskFromPixels } from "../../lib/poetry/imageMask";
   import {
     distance,
     pointsToPath,
@@ -168,7 +168,7 @@
     selectionStatus = "Loading the subject selector…";
     segmenterBusy = true;
     segmenterWorker = new Worker(
-      new URL("../../workers/interactive-segmenter.worker.ts", import.meta.url),
+      new URL("../../lib/poetry/segmenter.worker.ts", import.meta.url),
       { type: "module" },
     );
 

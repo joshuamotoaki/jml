@@ -6,7 +6,6 @@
     "PP Nikkei Journal", "Avenir Next", "Helvetica Neue", "Segoe UI",
     "Noto Sans", sans-serif;
   --font-noto-serif-jp: "Noto Serif JP", serif;
-  --font-mixed: "PP Editorial New", "Noto Serif JP", Georgia, serif;
 }
 
 @theme {
@@ -14,14 +13,6 @@
   --color-light-hover: #d0d0d0;
   --color-dark: #242424;
   --color-dark-hover: #444444;
-
-  --color-red-std: #e63946;
-  --color-orange-std: #f4845f;
-  --color-yellow-std: #ffd166;
-  --color-green-std: #06d6a0;
-  --color-blue-std: #118ab2;
-  --color-indigo-std: #5c6bc0;
-  --color-violet-std: #9b5de5;
 
   --text-huge: 4rem;
   --text-h1: 3.3rem;
@@ -32,6 +23,17 @@
   --text-h6: 1.33rem;
 
   --duration-std: 100ms;
+}
+
+/* Static so every swatch is emitted: Pomodoro picks them at runtime. */
+@theme static {
+  --color-red-std: #e63946;
+  --color-orange-std: #f4845f;
+  --color-yellow-std: #ffd166;
+  --color-green-std: #06d6a0;
+  --color-blue-std: #118ab2;
+  --color-indigo-std: #5c6bc0;
+  --color-violet-std: #9b5de5;
 }
 
 body {
@@ -48,18 +50,6 @@ body {
 
 .font-ultralight {
   font-weight: 200;
-}
-
-.font-regular {
-  font-weight: 400;
-}
-
-.font-ultrabold {
-  font-weight: 800;
-}
-
-.text-huge {
-  font-size: var(--text-huge);
 }
 
 .nav-button {
@@ -82,4 +72,25 @@ body {
     1px 0 0 var(--color-dark),
     0 -1px 0 var(--color-dark),
     0 1px 0 var(--color-dark);
+}
+
+/* Grain overlay. The filters it references are defined once in BaseLayout. */
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(
+    0,
+    0,
+    0,
+    0.1
+  ); /* Safari only renders the filter over a fill */
+  filter: url(#grain);
+  opacity: var(--grain-opacity, 0.33);
+  pointer-events: none;
+  z-index: var(--grain-z, 50);
+}
+
+.grain-color::before {
+  filter: url(#grain-color);
 }

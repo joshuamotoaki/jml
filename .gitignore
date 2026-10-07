@@ -1,6 +1,6 @@
 dist/
 .astro/
-.husky/
+.husky/_
 
 # dependencies
 node_modules/
