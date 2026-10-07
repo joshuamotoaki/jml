@@ -1,26 +1,14 @@
 ---
 import Header from "../components/Header.astro";
+import KizakiLink from "../components/KizakiLink.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import ToolIndex from "../components/ToolIndex.astro";
+import { socials } from "../lib/links";
 ---
 
 <BaseLayout>
   <Header />
 
-  <!-- Noise Overlay -->
-  <div id="cont" class="relative w-full h-screen overflow-hidden bg-light">
-    <svg style="position: absolute; width: 0; height: 0;">
-      <defs>
-        <filter id="pageNoise">
-          <feTurbulence
-            baseFrequency="0.4"
-            numOctaves="3"
-            stitchTiles="noStitch"></feTurbulence>
-          <feColorMatrix type="saturate" values="0"></feColorMatrix>
-        </filter>
-      </defs>
-    </svg>
-
+  <div class="grain relative w-full h-screen overflow-hidden bg-light">
     <!-- Name -->
     <div
       class="absolute bottom-[30%] md:bottom-0 left-2 rotate-270 origin-top-left z-50"
@@ -30,203 +18,134 @@ import ToolIndex from "../components/ToolIndex.astro";
       </h2>
     </div>
 
+    <!-- Desktop -->
     <div
-      class="hidden md:block absolute bottom-1/2 left-[20%] w-[40%] top-[30%] z-50"
+      class="hidden md:flex flex-col gap-2 absolute bottom-1/2 left-[20%] w-[40%] top-[30%] z-50"
     >
-      <div class="w-full h-full flex flex-col gap-2">
-        <h3 class="text-h5">
-          There is no reason not to consider the world as one gigantic painting.
-        </h3>
-        <div class="text-h6 text-dark-hover">- Robert Rauschenberg</div>
-        <div class="flex-1 flex items-start justify-between gap-6 pt-6">
-          <ToolIndex headingId="desktop-tools-heading" />
-          <div class="space-y-4">
-            <div class="flex flex-col">
-              <h4 class="font-bold">Social Media</h4>
-              <a
-                class="nav-button"
-                target="_blank"
-                href="https://x.com/joshuamotoaki"
-              >
-                Twitter
-              </a>
-              <a
-                class="nav-button"
-                target="_blank"
-                href="https://github.com/joshuamotoaki"
-              >
-                GitHub
-              </a>
-              <a
-                class="nav-button"
-                target="_blank"
-                href="https://www.linkedin.com/in/joshuamotoaki/"
-              >
-                LinkedIn
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <div id="kizaki" class="mt-8 text-xl z-50">
-          <p>
-            Building coordination technology at
-            <a
-              class="underline underline-offset-2 italic -space-x-1 hover:brightness-120 duration-150
-              whitespace-nowrap"
-              target="_blank"
-              href="https://kizaki.ai/"
-            >
-              <span class="text-[#3949AB]"> K </span>
-              <span class="text-[#0C8F63]"> i </span>
-              <span class="text-[#084C64]"> z </span>
-              <span class="text-[#B71F2A]"> a </span>
-              <span class="text-[#7A35C4]"> k </span>
-              <span class="text-[#D96422]"> i </span>
-            </a>
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div
-      class="absolute top-[10%] right-8 w-[50%] md:hidden space-y-4 pt-4 z-50"
-    >
-      <div id="kizaki" class="mt-16 text-xl">
-        <p>
-          Building coordination technology at
-          <a
-            class="underline underline-offset-2 italic -space-x-1 hover:brightness-120 duration-150
-              whitespace-nowrap z-50"
-            target="_blank"
-            href="https://kizaki.ai/"
-          >
-            <span class="text-[#3949AB]"> K </span>
-            <span class="text-[#0C8F63]"> i </span>
-            <span class="text-[#084C64]"> z </span>
-            <span class="text-[#B71F2A]"> a </span>
-            <span class="text-[#7A35C4]"> k </span>
-            <span class="text-[#D96422]"> i </span>
-          </a>
-        </p>
-      </div>
-    </div>
-
-    <div class="absolute top-[34%] left-[22%] right-8 md:hidden z-50">
-      <ToolIndex headingId="mobile-tools-heading" />
-    </div>
-
-    <div
-      class="absolute bottom-[5%] left-2 w-[35%] md:hidden space-y-4 pt-4 z-50"
-    >
-      <div class="flex flex-col">
+      <h3 class="text-h5">
+        There is no reason not to consider the world as one gigantic painting.
+      </h3>
+      <div class="text-h6 text-dark-hover">- Robert Rauschenberg</div>
+      <div class="flex-1 pt-6 flex flex-col items-end text-right">
         <h4 class="font-bold">Social Media</h4>
-        <a
-          class="nav-button"
-          target="_blank"
-          href="https://x.com/joshuamotoaki"
-        >
-          Twitter
-        </a>
-        <a
-          class="nav-button"
-          target="_blank"
-          href="https://github.com/joshuamotoaki"
-        >
-          GitHub
-        </a>
-        <a
-          class="nav-button"
-          target="_blank"
-          href="https://www.linkedin.com/in/joshuamotoaki/"
-        >
-          LinkedIn
-        </a>
+        {
+          socials.map((link) => (
+            <a
+              class="nav-button"
+              target="_blank"
+              rel="noopener noreferrer"
+              href={link.href}
+            >
+              {link.name}
+            </a>
+          ))
+        }
       </div>
+      <p class="mt-8 text-xl">
+        Making things at
+        <KizakiLink />
+      </p>
+    </div>
+
+    <!-- Mobile -->
+    <p
+      class="md:hidden absolute top-[10%] right-8 w-[50%] pt-36 text-xl z-50 pointer-events-none"
+    >
+      Making things at
+      <KizakiLink class="pointer-events-auto" />
+    </p>
+
+    <div class="md:hidden absolute bottom-[5%] left-2 flex flex-col z-50">
+      <h4 class="font-bold">Social Media</h4>
+      {
+        socials.map((link) => (
+          <a
+            class="nav-button"
+            target="_blank"
+            rel="noopener noreferrer"
+            href={link.href}
+          >
+            {link.name}
+          </a>
+        ))
+      }
     </div>
 
     <!-- Animated Color Bars -->
     <div class="absolute inset-0 z-10">
-      <!-- Red Bar with 劉 -->
       <div
-        class="absolute right-0 w-0 h-16 md:h-32 bg-red-std fuzzy-bar animate-grow-red top-[60%] md:top-[30%]"
+        class="bar bg-red-std top-[60%] md:top-[30%] [--bar-width:25%]"
         style="animation-delay: 0.25s;"
       >
-        <span class="zh bar-char animate-fade-in-red"> 劉 </span>
+        <span class="zh bar-char" style="animation-delay: 0.75s;"> 劉 </span>
       </div>
-
-      <!-- Yellow Bar with 元 -->
       <div
-        class="absolute right-0 w-0 h-16 md:h-32 bg-yellow-std fuzzy-bar animate-grow-yellow top-[75%] md:top-[55%]"
+        class="bar bg-yellow-std top-[75%] md:top-[55%] [--bar-width:35%] md:[--bar-width:30%]"
         style="animation-delay: 0.5s;"
       >
-        <span class="zh bar-char animate-fade-in-yellow"> 元 </span>
+        <span class="zh bar-char" style="animation-delay: 1s;"> 元 </span>
       </div>
-
-      <!-- Orange Bar with 明 -->
       <div
-        class="absolute right-0 w-0 h-16 md:h-32 bg-orange-std fuzzy-bar animate-grow-orange top-[90%] md:top-[80%]"
+        class="bar bg-orange-std top-[90%] md:top-[80%] [--bar-width:60%] md:[--bar-width:80%]"
         style="animation-delay: 0.75s;"
       >
-        <span class="zh bar-char animate-fade-in-orange"> 明 </span>
+        <span
+          class="zh bar-char"
+          style="animation-delay: 1.25s; animation-duration: 1.8s;"
+        >
+          明
+        </span>
       </div>
     </div>
   </div>
 </BaseLayout>
 
-<style lang="postcss">
-  .bar-char {
+<style>
+  .bar {
     position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 11rem;
-    font-weight: 600;
-    opacity: 0;
-  }
-
-  @media (max-width: 768px) {
-    .bar-char {
-      right: 0.2rem;
-    }
-  }
-
-  #cont::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.1); /* Not sure why Safari needs this but it does */
-    filter: url(#pageNoise);
-    opacity: 0.33;
-    pointer-events: none;
-    z-index: 50;
-  }
-
-  .fuzzy-bar {
-    box-shadow: 
+    right: 0;
+    width: 0;
+    height: 4rem;
+    box-shadow:
       0 0 20px rgba(0, 0, 0, 0.1),
       inset 0 0 20px rgba(255, 255, 255, 0.1);
     border-left: 1px solid rgba(255, 255, 255, 0.2);
+    animation: grow-bar 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 
-  .fuzzy-bar::before {
-    content: '';
+  .bar::before {
+    content: "";
     position: absolute;
-    top: -2px;
-    bottom: -2px;
-    left: -2px;
-    right: -2px;
+    inset: -2px;
     background: inherit;
     filter: blur(2px);
     opacity: 0.3;
     z-index: -1;
   }
 
-  /* Red bar - smallest width */
-  @keyframes grow-red {
+  .bar-char {
+    position: absolute;
+    right: 0.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 5.5rem;
+    font-weight: 600;
+    opacity: 0;
+    animation: fade-in-char 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @media (min-width: 768px) {
+    .bar {
+      height: 8rem;
+    }
+
+    .bar-char {
+      right: 1rem;
+      font-size: 11rem;
+    }
+  }
+
+  @keyframes grow-bar {
     0% {
       width: 0;
       opacity: 0;
@@ -235,124 +154,19 @@ import ToolIndex from "../components/ToolIndex.astro";
       opacity: 1;
     }
     100% {
-      width: 25%;
+      width: var(--bar-width);
       opacity: 1;
     }
   }
 
-  /* Yellow bar - medium width */
-  @keyframes grow-yellow {
+  @keyframes fade-in-char {
     0% {
-      width: 0;
       opacity: 0;
-    }
-    10% {
-      opacity: 1;
+      transform: translateY(-50%) scale(0.8);
     }
     100% {
-      width: 30%;
       opacity: 1;
-    }
-  }
-
-  /* Orange bar - largest width */
-  @keyframes grow-orange {
-    0% {
-      width: 0;
-      opacity: 0;
-    }
-    10% {
-      opacity: 1;
-    }
-    100% {
-      width: 80%;
-      opacity: 1;
-    }
-  }
-
-  @media (max-width: 768px) {
-    @keyframes grow-red {
-      0% {
-        width: 0;
-        opacity: 0;
-      }
-      10% {
-        opacity: 1;
-      }
-      100% {
-        width: 25%;
-        opacity: 1;
-      }
-    }
-
-    @keyframes grow-yellow {
-      0% {
-        width: 0;
-        opacity: 0;
-      }
-      10% {
-        opacity: 1;
-      }
-      100% {
-        width: 35%;
-        opacity: 1;
-      }
-    }
-
-    @keyframes grow-orange {
-      0% {
-        width: 0;
-        opacity: 0;
-      }
-      10% {
-        opacity: 1;
-      }
-      100% {
-        width: 60%;
-        opacity: 1;
-      }
-    }
-  }
-
-  /* Character fade-in animations */
-  @keyframes fade-in-character {
-    0% { opacity: 0; transform: translateY(-50%) scale(0.8); }
-    100% { opacity: 1; transform: translateY(-50%) scale(1); }
-  }
-
-  .animate-grow-red {
-    animation: grow-red 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  }
-
-  .animate-grow-yellow {
-    animation: grow-yellow 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  }
-
-  .animate-grow-orange {
-    animation: grow-orange 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  }
-
-  .animate-fade-in-red {
-    animation: fade-in-character 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    animation-delay: 0.75s;
-  }
-
-  .animate-fade-in-yellow {
-    animation: fade-in-character 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    animation-delay: 1s;
-  }
-
-  .animate-fade-in-orange {
-    animation: fade-in-character 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    animation-delay: 1.25s;
-  }
-
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .animate-fade-in-red,
-    .animate-fade-in-yellow,
-    .animate-fade-in-orange {
-      font-size: 5.5rem;
+      transform: translateY(-50%) scale(1);
     }
   }
 </style>

@@ -1,19 +1,13 @@
+---
+import { socials } from "../lib/links";
+---
+
 <div
   id="about-dialog"
-  class="about-dialog text-light"
+  class="about-dialog grain grain-color text-light"
   role="dialog"
   aria-modal="true"
 >
-  <svg style="position: absolute; width: 0; height: 0;">
-    <defs>
-      <filter id="dialogNoise">
-        <feTurbulence baseFrequency="0.4" numOctaves="4" stitchTiles="noStitch"
-        ></feTurbulence>
-        <feColorMatrix type="saturate" values="128"></feColorMatrix>
-      </filter>
-    </defs>
-  </svg>
-
   <div class="w-full h-full">
     <button
       class="about-close-btn"
@@ -44,10 +38,12 @@
             href="https://kizaki.ai"
             target="_blank"
             rel="noopener noreferrer">Kizaki</a
-          >, a startup building AI coordination technologies.
+          >.
         </p>
         <p>
-          I recently graduated from Princeton University, where I studied Electrical & Computer Engineering. While there, I led the software group
+          I recently graduated from Princeton University, where I studied
+          Electrical & Computer Engineering. While there, I led the software
+          group{" "}
           <a
             class="hover:text-light-hover duration-100 underline"
             href="https://tigerapps.org"
@@ -55,7 +51,7 @@
             rel="noopener noreferrer"
           >
             TigerApps</a
-          > and researched computer networks with the
+          > and researched computer networks with the{" "}
           <a
             class="hover:text-light-hover duration-100 underline"
             href="https://netsyn.princeton.edu/"
@@ -63,7 +59,7 @@
             rel="noopener noreferrer"
           >
             NetSyn Lab</a
-          >. 
+          >.
         </p>
         <p>
           <span class="zh"> 劉元明 </span> is my Cantonese last name (Lau) and my
@@ -73,33 +69,21 @@
 
       <div class="absolute bottom-0 right-0 sm:text-h5 md:text-h4 text-right">
         <div class="flex flex-wrap gap-4 justify-end">
-          <a
-            href="https://x.com/joshuamotoaki"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="hover:text-light-hover duration-100 underline"
-          >
-            Twitter
-          </a>
-          <a
-            href="https://github.com/joshuamotoaki"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="hover:text-light-hover duration-100 underline"
-          >
-            GitHub
-          </a>
-          <a
-            href="https://www.linkedin.com/in/joshuamotoaki/"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="hover:text-light-hover duration-100 underline"
-          >
-            LinkedIn
-          </a>
+          {
+            socials.map((link) => (
+              <a
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:text-light-hover duration-100 underline"
+              >
+                {link.name}
+              </a>
+            ))
+          }
         </div>
         <p>joshua@kizaki.ai</p>
-        <p class="font-light italic">Los Angeles, California</p>
+        <p class="font-light italic">San Francisco, California</p>
       </div>
     </div>
   </div>
@@ -115,6 +99,8 @@
     background: rgba(55, 0, 123, 0.8);
     backdrop-filter: blur(12px);
     z-index: 1000;
+    --grain-opacity: 0.15;
+    --grain-z: 1;
     opacity: 0;
     padding: 1rem;
     visibility: hidden;
@@ -126,19 +112,6 @@
   .about-dialog.open {
     opacity: 1;
     visibility: visible;
-  }
-
-  .about-dialog::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    filter: url(#dialogNoise);
-    opacity: 0.15;
-    pointer-events: none;
-    z-index: 1;
   }
 
   .about-content {

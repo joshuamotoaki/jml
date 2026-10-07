@@ -1,0 +1,32 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+const letters = [
+  { letter: "K", color: "text-[#3949AB]" },
+  { letter: "i", color: "text-[#0C8F63]" },
+  { letter: "z", color: "text-[#084C64]" },
+  { letter: "a", color: "text-[#B71F2A]" },
+  { letter: "k", color: "text-[#7A35C4]" },
+  { letter: "i", color: "text-[#D96422]" },
+];
+---
+
+<a
+  class:list={[
+    "underline underline-offset-2 italic -space-x-1 hover:brightness-120 duration-150 whitespace-nowrap",
+    className,
+  ]}
+  target="_blank"
+  rel="noopener noreferrer"
+  href="https://kizaki.ai/"
+>
+  {
+    letters.map(({ letter, color }) => (
+      <span class={color}>{` ${letter} `}</span>
+    ))
+  }
+</a>

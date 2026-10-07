@@ -1,16 +1,17 @@
 ---
-// Header.astro
+import AboutOverlay from "./AboutOverlay.astro";
+import ToolsMenu from "./ToolsMenu.astro";
 ---
 
-<header class="absolute top-0 left-0 w-full z-50">
+<header
+  class="absolute top-0 left-0 w-full z-50 has-[[aria-expanded=true]]:z-60"
+>
   <!-- Desktop -->
   <nav class="hidden md:flex items-start justify-between px-4 py-1">
-    <a href="/" class="text-huge font-light tracking-tighter -space-x-3">
-      <span class="zh"> 劉元明 </span>
-      <span> JML </span>
-    </a>
+    <a href="/" class="text-huge font-light tracking-tighter"> JML </a>
     <div class="flex items-center gap-5">
       <a class="nav-button text-h4" href="/blog/">Blog</a>
+      <ToolsMenu id="desktop-tools" triggerClass="text-h4" />
       <button
         class="nav-button text-h4 cursor-pointer border-0 bg-transparent p-0"
         data-about-trigger
@@ -23,14 +24,10 @@
 
   <!-- Mobile -->
   <nav class="flex md:hidden px-4 py-2 justify-between h-fit">
-    <a href="/" class="text-h1 font-light tracking-tighter -space-x-2 h-fit">
-      <span class="zh"> 劉元明 </span>
-      <span> JML </span>
-    </a>
-    <div
-      class="top-0 right-0 flex flex-col mt-2 justify-between w-12 h-fit gap-7"
-    >
+    <a href="/" class="text-h1 font-light tracking-tighter h-fit"> JML </a>
+    <div class="flex flex-col mt-2 justify-between w-12 h-fit gap-7">
       <a class="nav-button text-h5 transform rotate-90" href="/blog/">Blog</a>
+      <ToolsMenu id="mobile-tools" triggerClass="text-h5 transform rotate-90" />
       <button
         class="nav-button text-h5 cursor-pointer transform rotate-90 border-0 bg-transparent p-0"
         data-about-trigger
@@ -41,3 +38,5 @@
     </div>
   </nav>
 </header>
+
+<AboutOverlay />

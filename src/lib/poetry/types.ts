@@ -103,14 +103,6 @@ export function cloneKeyframe(source: Keyframe): Keyframe {
   return { id: source.id, time: source.time, pose: clonePose(source.pose) };
 }
 
-export function cloneMotion(source: MotionDoc): MotionDoc {
-  return {
-    ...source,
-    keyframes: source.keyframes.map(cloneKeyframe),
-    easings: [...source.easings],
-  };
-}
-
 export function clampProgress(value: number) {
   return Math.max(0, Math.min(1, value));
 }

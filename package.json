@@ -1,5 +1,5 @@
 {
-  "name": "my-website",
+  "name": "motoaki.dev",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
@@ -17,11 +17,12 @@
     ]
   },
   "dependencies": {
-    "@astrojs/rss": "^4.0.15",
-    "@astrojs/svelte": "^7.2.5",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/svelte": "^9.0.1",
+    "@fontsource-variable/schibsted-grotesk": "^5.3.0",
     "@mediapipe/tasks-vision": "1.0.1",
     "@tailwindcss/vite": "^4.1.7",
-    "astro": "^5.17.2",
+    "astro": "^7.3.6",
     "d3-contour": "4.0.2",
     "heic2any": "0.0.4",
     "svelte": "^5.56.10",
@@ -33,8 +34,6 @@
     "lint-staged": "^16.1.0",
     "prettier": "3.5.3",
     "prettier-plugin-astro": "0.14.1",
-    "prettier-plugin-svelte": "^4.1.1",
-    "vite": "^6.4.1",
-    "wrangler": "^4.18.0"
+    "prettier-plugin-svelte": "^4.1.1"
   }
 }

@@ -1,0 +1,82 @@
+/* Shared by the Pomodoro page and its dialogs. */
+
+.pomo-btn {
+  padding: 0.5rem 1rem;
+  background: var(--color-dark);
+  border: 2px solid var(--color-light);
+  color: var(--color-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: var(--text-h6);
+}
+
+.pomo-btn:hover,
+.pomo-btn.active {
+  background: var(--color-light);
+  color: var(--color-dark);
+}
+
+@media (min-width: 768px) {
+  .pomo-btn {
+    padding: 0.5rem 1.5rem;
+  }
+}
+
+.pomo-btn-solid,
+.pomo-btn-ghost {
+  padding: 0.5rem 2rem;
+  background: var(--color-light);
+  border: 2px solid var(--color-light);
+  color: var(--color-dark);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  font-size: var(--text-h6);
+}
+
+.pomo-btn-ghost {
+  background: transparent;
+  color: var(--color-light);
+}
+
+.pomo-btn-solid:hover,
+.pomo-btn-ghost:hover {
+  opacity: 0.8;
+}
+
+.pomo-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(12px);
+  color: var(--color-light);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+
+.pomo-dialog.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.pomo-dialog-content {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 3rem;
+  background: var(--color-dark);
+  border: 2px solid var(--color-light);
+}
+
+.pomo-dialog-content.small {
+  max-width: 400px;
+}
