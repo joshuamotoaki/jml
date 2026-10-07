@@ -1,0 +1,126 @@
+---
+interface Props {
+  id: string;
+  class?: string;
+  triggerClass?: string;
+}
+
+const { id, class: className, triggerClass } = Astro.props;
+const panelId = `${id}-panel`;
+
+const tools = [
+  { name: "Concrete Poetry", href: "/poetry" },
+  { name: "Pomodoro", href: "/pomodoro" },
+];
+---
+
+<div class:list={["tools-menu", className]} data-tools-menu>
+  <button
+    class:list={[
+      "nav-button cursor-pointer border-0 bg-transparent p-0",
+      triggerClass,
+    ]}
+    type="button"
+    aria-expanded="false"
+    aria-controls={panelId}
+    data-tools-trigger
+  >
+    Tools
+  </button>
+
+  <ul class="tools-menu__panel" id={panelId} data-tools-panel hidden>
+    {
+      tools.map((tool) => (
+        <li>
+          <a class="nav-button" href={tool.href}>
+            {tool.name}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</div>
+
+<script>
+  const menus = document.querySelectorAll<HTMLElement>("[data-tools-menu]");
+
+  const setOpen = (menu: HTMLElement, open: boolean) => {
+    const trigger = menu.querySelector<HTMLButtonElement>(
+      "[data-tools-trigger]"
+    );
+    const panel = menu.querySelector<HTMLElement>("[data-tools-panel]");
+    if (!trigger || !panel) return;
+    trigger.setAttribute("aria-expanded", String(open));
+    panel.hidden = !open;
+  };
+
+  menus.forEach((menu) => {
+    menu
+      .querySelector("[data-tools-trigger]")
+      ?.addEventListener("click", () => {
+        const panel = menu.querySelector<HTMLElement>("[data-tools-panel]");
+        setOpen(menu, Boolean(panel?.hidden));
+      });
+  });
+
+  document.addEventListener("click", (event) => {
+    menus.forEach((menu) => {
+      if (!menu.contains(event.target as Node)) setOpen(menu, false);
+    });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    menus.forEach((menu) => {
+      const trigger = menu.querySelector<HTMLButtonElement>(
+        "[data-tools-trigger]"
+      );
+      if (trigger?.getAttribute("aria-expanded") !== "true") return;
+      setOpen(menu, false);
+      trigger.focus();
+    });
+  });
+</script>
+
+<style>
+  .tools-menu {
+    position: relative;
+  }
+
+  .tools-menu [data-tools-trigger]:focus-visible,
+  .tools-menu a:focus-visible {
+    outline: 1px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  .tools-menu__panel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.3rem;
+    margin: 0.35rem 0 0;
+    padding: 0.1rem 0.6rem 0.1rem 0;
+    border-right: 1px solid var(--color-dark);
+    list-style: none;
+    font-size: var(--text-h6);
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .tools-menu__panel[hidden] {
+    display: none;
+  }
+
+  /* Mobile nav is a vertical column on the right edge: open to its left. */
+  @media (max-width: 767px) {
+    .tools-menu__panel {
+      top: 0;
+      right: calc(100% + 0.75rem);
+      margin: 0;
+      font-size: 1.1rem;
+    }
+  }
+</style>

@@ -1,8 +1,11 @@
 ---
 // Header.astro
+import ToolsMenu from "./ToolsMenu.astro";
 ---
 
-<header class="absolute top-0 left-0 w-full z-50">
+<header
+  class="absolute top-0 left-0 w-full z-50 has-[[aria-expanded=true]]:z-60"
+>
   <!-- Desktop -->
   <nav class="hidden md:flex items-start justify-between px-4 py-1">
     <a href="/" class="text-huge font-light tracking-tighter -space-x-3">
@@ -11,6 +14,7 @@
     </a>
     <div class="flex items-center gap-5">
       <a class="nav-button text-h4" href="/blog/">Blog</a>
+      <ToolsMenu id="desktop-tools" triggerClass="text-h4" />
       <button
         class="nav-button text-h4 cursor-pointer border-0 bg-transparent p-0"
         data-about-trigger
@@ -31,6 +35,7 @@
       class="top-0 right-0 flex flex-col mt-2 justify-between w-12 h-fit gap-7"
     >
       <a class="nav-button text-h5 transform rotate-90" href="/blog/">Blog</a>
+      <ToolsMenu id="mobile-tools" triggerClass="text-h5 transform rotate-90" />
       <button
         class="nav-button text-h5 cursor-pointer transform rotate-90 border-0 bg-transparent p-0"
         data-about-trigger
