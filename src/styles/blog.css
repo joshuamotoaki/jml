@@ -1,3 +1,6 @@
+@import "@fontsource-variable/schibsted-grotesk/wght.css";
+@import "@fontsource-variable/schibsted-grotesk/wght-italic.css";
+
 /* Blog: one typeface, three sizes, one muted tone. Nothing decorative. */
 
 .blog {
@@ -13,7 +16,7 @@
   margin: 0 auto;
   padding: 2rem 0 6rem;
   color: var(--blog-ink);
-  font-family: var(--font-pp-mori);
+  font-family: "Schibsted Grotesk Variable", "Helvetica Neue", sans-serif;
   font-size: var(--blog-size-0);
   font-weight: 400;
   line-height: 1.65;
@@ -101,7 +104,6 @@
 
 .blog-entry time {
   white-space: nowrap;
-  font-variant-numeric: tabular-nums;
 }
 
 .blog-entry-desc {
