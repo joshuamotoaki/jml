@@ -5,18 +5,9 @@ import "../../styles/blog.css";
 
 const includeDrafts = !import.meta.env.PROD;
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "long",
+  dateStyle: "medium",
   timeZone: "UTC",
 });
-const tagPalette = ["#e63946", "#f4845f", "#06d6a0", "#118ab2"];
-const getTagColor = (tag: string) => {
-  let hash = 0;
-  const normalized = tag.trim().toLowerCase();
-  for (const char of normalized) {
-    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  }
-  return tagPalette[hash % tagPalette.length];
-};
 
 const posts = (await getCollection("blog"))
   .filter((post) => includeDrafts || !post.data.draft)
@@ -37,82 +28,37 @@ const posts = (await getCollection("blog"))
     />
   </Fragment>
 
-  <div class="blog-shell">
-    <svg class="blog-noise-svg" aria-hidden="true">
-      <defs>
-        <filter id="blogPageNoise">
-          <feTurbulence
-            baseFrequency="0.4"
-            numOctaves="3"
-            stitchTiles="noStitch"></feTurbulence>
-          <feColorMatrix type="saturate" values="0"></feColorMatrix>
-        </filter>
-      </defs>
-    </svg>
+  <div class="blog">
+    <nav class="blog-nav">
+      <a href="/">Joshua Motoaki Lau (<span lang="zh-Hant">劉元明</span>)</a>
+      <a href="/rss.xml">RSS</a>
+    </nav>
 
-    <main class="blog-page">
-      <nav class="blog-nav" aria-label="Blog navigation">
-        <a href="/" class="blog-kicker"
-          ><span class="zh">劉元明</span> Joshua Motoaki Lau</a
-        >
-        <div class="blog-nav-links">
-          <button
-            class="blog-kicker blog-kicker-button"
-            data-about-trigger
-            type="button"
-          >
-            About
-          </button>
-          <a href="/rss.xml" class="blog-kicker">RSS</a>
-        </div>
-      </nav>
-
-      <header class="blog-masthead">
-        <h1 class="blog-title">Systems & <em>Style</em></h1>
-      </header>
+    <main class="blog-index">
+      <h1 class="sr-only">Blog</h1>
 
       {
         posts.length === 0 ? (
-          <p class="blog-empty">No published posts yet. Check back soon.</p>
+          <p class="blog-muted">No posts yet.</p>
         ) : (
-          <ul class="blog-list">
+          <ol class="blog-list">
             {posts.map((post) => (
-              <li class="blog-card">
-                <p class="blog-card-meta">
-                  <time datetime={post.data.pubDate.toISOString()}>
+              <li>
+                <a class="blog-entry" href={`/blog/${post.data.permalink}/`}>
+                  <span class="blog-entry-title">{post.data.title}</span>
+                  <time
+                    class="blog-muted"
+                    datetime={post.data.pubDate.toISOString()}
+                  >
                     {dateFormatter.format(post.data.pubDate)}
                   </time>
-                  {post.data.updatedDate && (
-                    <span>
-                      {" "}
-                      · Updated{" "}
-                      <time datetime={post.data.updatedDate.toISOString()}>
-                        {dateFormatter.format(post.data.updatedDate)}
-                      </time>
-                    </span>
-                  )}
-                </p>
-                <div class="blog-card-main">
-                  <h2 class="blog-card-title">
-                    <a href={`/blog/${post.data.permalink}/`}>
-                      {post.data.title}
-                    </a>
-                  </h2>
-                  <p class="blog-card-desc">{post.data.description}</p>
-                  <div class="blog-tags" aria-label="Tags">
-                    {post.data.tags.map((tag) => (
-                      <span
-                        class="blog-tag"
-                        style={`--blog-tag-color: ${getTagColor(tag)}`}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                  <span class="blog-entry-desc blog-muted">
+                    {post.data.description}
+                  </span>
+                </a>
               </li>
             ))}
-          </ul>
+          </ol>
         )
       }
     </main>

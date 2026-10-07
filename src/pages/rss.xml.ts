@@ -9,7 +9,7 @@ export const GET: APIRoute = async (context) => {
     .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
   return rss({
-    title: "Joshua Motoaki Lau — Systems & Style Blog",
+    title: "Joshua Motoaki Lau — Blog",
     description:
       "Writing about systems and style, both technical and human and the intersection of the two.",
     site: context.site ?? "https://motoaki.dev",
