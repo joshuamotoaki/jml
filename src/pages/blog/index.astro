@@ -5,7 +5,9 @@ import "../../styles/blog.css";
 
 const includeDrafts = !import.meta.env.PROD;
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
+  month: "numeric",
+  day: "numeric",
+  year: "2-digit",
   timeZone: "UTC",
 });
 
@@ -14,7 +16,7 @@ const posts = (await getCollection("blog"))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---
 
-<BaseLayout title="Blog | Joshua Motoaki Lau">
+<BaseLayout title="Joshua's Blog">
   <Fragment slot="head">
     <meta
       name="description"
@@ -45,15 +47,13 @@ const posts = (await getCollection("blog"))
             {posts.map((post) => (
               <li>
                 <a class="blog-entry" href={`/blog/${post.data.permalink}/`}>
-                  <span class="blog-entry-title">{post.data.title}</span>
-                  <time
-                    class="blog-muted"
-                    datetime={post.data.pubDate.toISOString()}
-                  >
-                    {dateFormatter.format(post.data.pubDate)}
-                  </time>
-                  <span class="blog-entry-desc blog-muted">
-                    {post.data.description}
+                  <span class="blog-entry-title">{post.data.title}</span>{" "}
+                  <span class="blog-muted">
+                    (
+                    <time datetime={post.data.pubDate.toISOString()}>
+                      {dateFormatter.format(post.data.pubDate)}
+                    </time>
+                    )
                   </span>
                 </a>
               </li>

@@ -29,7 +29,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
 });
 ---
 
-<BaseLayout title={`${post.data.title} | Blog | Joshua Motoaki Lau`}>
+<BaseLayout title={post.data.title}>
   <Fragment slot="head">
     <meta name="description" content={post.data.description} />
     <link
